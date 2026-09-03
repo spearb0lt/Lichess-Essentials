@@ -18,6 +18,10 @@
            placeholder="https://lichess.org/study/i7hMEq7h  (or a chapter URL)"
            autocomplete="off">
     <button type="submit" id="load-btn">Load study</button>
+    <button type="button" id="save-star" class="ghost hidden"
+            title="Add this study to my studies">&#9734; Save</button>
+    <button type="button" id="home-toggle" class="ghost"
+            title="My studies (studies.txt)">Studies</button>
     <button type="button" id="token-toggle" class="ghost" title="Private studies">Token</button>
   </form>
 </header>
@@ -34,6 +38,17 @@
 </div>
 
 <div id="status" class="status hidden"></div>
+
+<!-- The home page: the list from studies.txt, so opening the app is not a
+     blank screen.  Hidden as soon as a study is loaded. -->
+<section id="home" class="home hidden">
+  <div class="home-head">
+    <h2>My studies</h2>
+    <p id="home-note" class="dim small"></p>
+  </div>
+  <div id="home-list" class="home-list"></div>
+  <p id="home-problems" class="note hidden"></p>
+</section>
 
 <main id="app" class="app hidden">
 
@@ -79,8 +94,11 @@
     </div>
 
     <div class="meta">
-      <div id="move-label" class="move-label">Starting position</div>
-      <div id="line-label" class="dim small">Main line</div>
+      <!-- Tinted with the current sideline's colour; plain on the main line. -->
+      <div id="side-chip" class="side-chip">
+        <div id="move-label" class="move-label">Starting position</div>
+        <div id="line-label" class="dim small">Main line</div>
+      </div>
       <div id="engine-line" class="dim small engine-line"></div>
       <div id="comment" class="comment"></div>
     </div>

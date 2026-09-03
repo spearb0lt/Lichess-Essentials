@@ -19,6 +19,7 @@ const FILES = "abcdefgh";
 const state = {
   key: null,
   study: null,
+  loadedUrl: null,      // the URL as typed: a chapter URL must stay one
   chapter: null,
   chapterIndex: 0,
   stepIndex: 0,
@@ -48,6 +49,34 @@ function showStatus(message, kind) {
   node.textContent = message || "";
   node.className = "status" + (kind === "info" ? " info" : "");
   node.classList.toggle("hidden", !message);
+}
+
+/** ``s3`` for the third sideline of the chapter, ``main`` otherwise. */
+function sidelineTag(branch) {
+  return branch ? `s${branch}` : "main";
+}
+
+/** A sideline's {ink, rule, tint}, or null for the main line.
+ *
+ *  The palette comes from the server so the page and the PDF writers paint
+ *  the same colours -- see sidelines.py.
+ */
+function sidelineColor(branch) {
+  const palette = state.study && state.study.sidelinePalette;
+  if (!branch || !palette || !palette.length) return null;
+  return palette[(branch - 1) % palette.length];
+}
+
+/** Paint (or clear) one sideline's colour on an element and its children. */
+function applySidelineColor(node, color) {
+  if (!node) return;
+  node.classList.toggle("side", !!color);
+  for (const [name, value] of [["--side-ink", color && color.ink],
+                               ["--side-rule", color && color.rule],
+                               ["--side-tint", color && color.tint]]) {
+    if (value) node.style.setProperty(name, value);
+    else node.style.removeProperty(name);
+  }
 }
 
 /** The position currently on the board: a study step, or a free-play move. */
@@ -280,6 +309,7 @@ function renderPosition() {
     const moves = state.free.history.map((h) => h.san);
     label.textContent = moves[moves.length - 1] || "Your move";
     label.classList.add("variation");
+    applySidelineColor($("side-chip"), null);
     lineLabel.textContent = "your own line: " + moves.join(" ");
     $("comment").textContent = "";
     $("free-banner").classList.remove("hidden");
@@ -289,8 +319,10 @@ function renderPosition() {
     const current = state.chapter.steps[state.stepIndex];
     label.textContent = current.san ? current.label : "Starting position";
     label.classList.toggle("variation", current.depth > 0);
+    applySidelineColor($("side-chip"), sidelineColor(current.branch));
     lineLabel.textContent = current.depth
-      ? `sideline (depth ${current.depth}) — ${current.lineLabel}`
+      ? `${sidelineTag(current.branch)} · sideline (depth ${current.depth})`
+        + ` — ${current.lineLabel}`
       : "Main line";
     $("comment").textContent = current.comment || "";
     $("free-banner").classList.add("hidden");
@@ -400,6 +432,7 @@ function renderMoves() {
   const blocks = [];
   let current = null;
   let depth = 0;
+  let branch = 0;
   let forceNumber = true;
 
   const flush = () => {
@@ -414,11 +447,17 @@ function renderMoves() {
 
   for (let i = 1; i < chapter.steps.length; i += 1) {
     const s = chapter.steps[i];
-    if (!current || s.depth !== depth || s.startsVariation) {
+    if (!current || s.depth !== depth || s.branch !== branch
+        || s.startsVariation) {
       flush();
       depth = s.depth;
-      current = { depth, parts: [] };
+      branch = s.branch || 0;
+      current = { depth, branch, parts: [] };
       forceNumber = true;
+      // Name the sideline where it opens, so the colour has a label.
+      if (branch && s.startsVariation) {
+        current.parts.push(`<span class="stag">${sidelineTag(branch)}</span>`);
+      }
     }
 
     let number = "";
@@ -442,7 +481,15 @@ function renderMoves() {
   flush();
 
   container.innerHTML = blocks
-    .map((b) => `<div class="blk" data-depth="${b.depth}">${b.parts.join(" ")}</div>`)
+    .map((b) => {
+      const color = sidelineColor(b.branch);
+      const tones = color
+        ? ` style="--side-ink:${color.ink};--side-rule:${color.rule};`
+          + `--side-tint:${color.tint}"`
+        : "";
+      return `<div class="blk${color ? " side" : ""}" `
+        + `data-depth="${b.depth}"${tones}>${b.parts.join(" ")}</div>`;
+    })
     .join("");
 
   container.querySelectorAll(".mv").forEach((node) => {
@@ -601,6 +648,91 @@ async function postJson(url, body) {
   return response.json();
 }
 
+/* ------------------------------------------------------------- home page */
+
+/** Read studies.txt through the API and draw it. Re-read on every open, so
+ *  editing the file and refreshing is enough. */
+async function showHome() {
+  const home = $("home");
+  home.classList.remove("hidden");
+  try {
+    const data = await (await fetch("/api/studies")).json();
+    renderHome(data);
+  } catch (error) {
+    $("home-list").innerHTML =
+      `<div class="home-empty">Could not read the studies list.</div>`;
+  }
+}
+
+function renderHome(data) {
+  const list = $("home-list");
+  const sections = data.sections || [];
+
+  $("home-note").textContent = data.count
+    ? `${data.count} ${data.count === 1 ? "study" : "studies"} from ${data.path}`
+      + " — edit that file to change this list."
+    : `Add studies to ${data.path}, or load one and press ☆ Save.`;
+
+  if (!data.count) {
+    list.innerHTML = `<div class="home-empty">Nothing in the list yet. `
+      + `Paste a study URL above, then press <b>☆ Save</b> to keep it here.</div>`;
+  } else {
+    list.innerHTML = sections.map((section) => {
+      const cards = section.studies.map((study) => {
+        const badge = study.viaChapter
+          ? `<span class="badge" title="Opens through a chapter URL, which is `
+            + `how a private study loads without a token">chapter link</span>`
+          : "";
+        return `<button class="study-card" data-url="${escapeHtml(study.url)}">`
+          + `<span class="card-name">${escapeHtml(study.name)}</span>`
+          + `<span class="card-meta">${escapeHtml(study.studyId)}${badge}</span>`
+          + `</button>`;
+      }).join("");
+      const heading = section.heading
+        ? `<h3>${escapeHtml(section.heading)}</h3>` : "";
+      return `<div class="home-section">${heading}`
+        + `<div class="card-row">${cards}</div></div>`;
+    }).join("");
+  }
+
+  list.querySelectorAll(".study-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      $("study-url").value = card.dataset.url;
+      loadStudy(null);
+    });
+  });
+
+  const problems = $("home-problems");
+  const bad = data.problems || [];
+  problems.classList.toggle("hidden", !bad.length);
+  if (bad.length) {
+    problems.textContent = `${bad.length} line${bad.length === 1 ? "" : "s"} in `
+      + `the file could not be read (expected "Name | URL"): `
+      + bad.map((p) => `line ${p.line}`).join(", ");
+  }
+}
+
+/** Add the study now on screen to studies.txt, name and all. */
+async function saveCurrentStudy() {
+  if (!state.study) return;
+  const button = $("save-star");
+  button.disabled = true;
+  try {
+    const data = await postJson("/api/studies", {
+      url: state.loadedUrl || state.study.url,
+      name: state.study.name || "",
+    });
+    showStatus(data.added
+      ? `Saved “${data.study.name}” to my studies.`
+      : `“${data.study.name}” is already in my studies.`, "info");
+    button.textContent = "★ Saved";
+  } catch (error) {
+    showStatus(error.message);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function loadStudy(event) {
   if (event) event.preventDefault();
   const url = $("study-url").value.trim();
@@ -615,6 +747,7 @@ async function loadStudy(event) {
     const data = await postJson("/api/study", { url, token: token || null });
     state.key = data.key;
     state.study = data;
+    state.loadedUrl = url;
     state.evals = {};
 
     $("study-name").textContent = data.name;
@@ -625,6 +758,10 @@ async function loadStudy(event) {
     $("pgn-link").href = `/api/pgn/${data.key}`;
 
     $("app").classList.remove("hidden");
+    $("home").classList.add("hidden");
+    const star = $("save-star");
+    star.classList.remove("hidden");
+    star.textContent = "☆ Save";
     selectChapter(0);
     showStatus("");
   } catch (error) {
@@ -765,6 +902,11 @@ async function init() {
   $("load-form").addEventListener("submit", loadStudy);
   $("token-toggle").addEventListener("click",
     () => $("token-row").classList.toggle("hidden"));
+  $("save-star").addEventListener("click", saveCurrentStudy);
+  $("home-toggle").addEventListener("click", () => {
+    if ($("home").classList.contains("hidden")) showHome();
+    else $("home").classList.add("hidden");
+  });
 
   $("btn-next").addEventListener("click", () => { stopAutoplay(); step(1); });
   $("btn-prev").addEventListener("click", () => { stopAutoplay(); step(-1); });
@@ -809,6 +951,9 @@ async function init() {
   if (params.get("url")) {
     $("study-url").value = params.get("url");
     loadStudy(null);
+  } else {
+    // Opening the app lands on the study list rather than an empty page.
+    showHome();
   }
 }
 

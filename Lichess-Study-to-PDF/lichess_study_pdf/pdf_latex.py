@@ -23,6 +23,8 @@ import tempfile
 import unicodedata
 from pathlib import Path
 
+from .sidelines import PALETTE, slot_for, tag_for
+
 #: Extra places to look for a TeX distribution on Windows.
 _EXTRA_TEX_DIRS = [
     Path.home() / "AppData/Local/Programs/MiKTeX/miktex/bin/x64",
@@ -208,7 +210,7 @@ PREAMBLE = r"""\documentclass[@FONTSIZE@,twocolumn,@PAPER@]{article}
 \usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
 
-\definecolor{lspside}{HTML}{8A5A2B}
+@SIDECOLORS@
 \definecolor{lspcomment}{HTML}{3A352E}
 
 \setlength{\parindent}{0pt}
@@ -221,27 +223,36 @@ PREAMBLE = r"""\documentclass[@FONTSIZE@,twocolumn,@PAPER@]{article}
 \fancyfoot[C]{\small\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
-%% A sideline: indented by nesting depth, set in brown, with a rule down the
-%% left so the nesting still reads when the page is printed in greyscale.
-%% #1 = depth, #2 = content.
-\newcommand{\lspvarblock}[2]{%
+%% A sideline: indented by nesting depth and set in its own colour -- a wash
+%% behind it, a rule down its left edge so the nesting still reads when the
+%% page is printed in greyscale, and matching ink for the moves.
+%% #1 = depth, #2 = palette slot, #3 = content.
+\newcommand{\lspvarblock}[3]{%
   \par\vspace{2pt}%
   \noindent\hspace*{#1em}%
-  \textcolor{lspside}{\vrule width 1.1pt}%
-  \hspace{0.55em}%
-  \begin{minipage}[t]{\dimexpr\linewidth-#1em-1.7em\relax}%
-    \small\color{lspside}#2%
-  \end{minipage}%
+  \begingroup\setlength{\fboxsep}{2.5pt}%
+  \colorbox{lsptint#2}{%
+    \textcolor{lsprule#2}{\vrule width 1.3pt}%
+    \hspace{0.5em}%
+    \begin{minipage}[t]{\dimexpr\linewidth-#1em-1.8em-2\fboxsep\relax}%
+      \small\color{lspink#2}#3%
+    \end{minipage}%
+  }%
+  \endgroup
   \par\vspace{2pt}%
 }
 
-%% Fallback for a sideline too long to sit in an unbreakable minipage: same
-%% colour and indent, but it can split across columns and pages.
-\newcommand{\lspvarlong}[2]{%
-  \par\begingroup\small\color{lspside}%
-  \setlength{\leftskip}{\dimexpr#1em+1.7em\relax}%
-  \noindent#2\par\endgroup
+%% Fallback for a sideline too long to sit in an unbreakable minipage.  A
+%% colorbox cannot break across a column, so this one keeps the colour and
+%% the indent and gives up the wash.
+\newcommand{\lspvarlong}[3]{%
+  \par\begingroup\small\color{lspink#2}%
+  \setlength{\leftskip}{\dimexpr#1em+1.8em\relax}%
+  \noindent#3\par\endgroup
 }
+
+%% The sideline's number, printed where it opens, so the colour has a name.
+\newcommand{\lsptag}[1]{{\scriptsize\textsf{#1}}~}
 
 %% The move table: number, White's move, Black's move.
 \newenvironment{lspmoves}{%
@@ -290,7 +301,19 @@ class LatexBook:
     def _preamble(self) -> str:
         # A chess book is portrait, always. The slideshow mode's landscape
         # default is for on-screen stepping and makes no sense here.
+        # One xcolor definition per tone per slot: the sideline commands
+        # build the colour names from the slot number they are handed.
+        definitions = []
+        for color in PALETTE:
+            for prefix, value in (("lspink", color.ink),
+                                  ("lsprule", color.rule),
+                                  ("lsptint", color.tint)):
+                definitions.append(
+                    r"\definecolor{%s%d}{HTML}{%s}"
+                    % (prefix, color.slot, value.lstrip("#").upper())
+                )
         return (PREAMBLE
+                .replace("@SIDECOLORS@", "\n".join(definitions))
                 .replace("@FONTSIZE@", "10pt")
                 .replace("@PAPER@", "a4paper"))
 
@@ -382,11 +405,14 @@ class LatexBook:
             nonlocal run
             if run and run["parts"]:
                 body = " ".join(run["parts"])
+                if run["tag"]:
+                    body = r"\lsptag{%s}" % tag_for(run["branch"]) + body
                 # A minipage cannot break across a column, so hand anything
                 # long to the breakable variant instead.
                 command = "lspvarlong" if len(body) > 420 else "lspvarblock"
-                out.append("\\%s{%d}{%s}" % (
-                    command, min(run["depth"], 4), body))
+                out.append("\\%s{%d}{%d}{%s}" % (
+                    command, min(run["depth"], 4),
+                    slot_for(run["branch"]), body))
             run = None
 
         mainline_seen = 0
@@ -410,9 +436,11 @@ class LatexBook:
             else:
                 flush_rows()
                 if (run is None or run["depth"] != step.depth
+                        or run["branch"] != step.branch
                         or step.starts_variation):
                     flush_run()
-                    run = {"depth": step.depth, "parts": []}
+                    run = {"depth": step.depth, "branch": step.branch,
+                           "parts": [], "tag": step.starts_variation}
 
                 # Only the first move of a run needs its number spelled out
                 # for Black; after that the moves read continuously.

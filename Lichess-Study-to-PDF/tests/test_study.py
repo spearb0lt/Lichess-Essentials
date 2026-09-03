@@ -1,14 +1,34 @@
 """Tests that pin down the behaviour that is easy to get wrong."""
 
+import textwrap
 from pathlib import Path
 
 import chess
 import pytest
+from fastapi import HTTPException
 
 from lichess_study_pdf.fetch import StudyFetchError, parse_study_url
 from lichess_study_pdf.notation import child_map, continuation, notation_blocks
 from lichess_study_pdf.parse import nag_text, parse_study, split_comment
 from lichess_study_pdf.pdf import PdfOptions, build_pdf
+from lichess_study_pdf.server import (
+    SaveStudyRequest,
+    list_studies,
+    save_study,
+)
+from lichess_study_pdf.sidelines import (
+    PALETTE,
+    PALETTE_SIZE,
+    color_for,
+    slot_for,
+    tag_for,
+)
+from lichess_study_pdf.studies import (
+    SAVED_HEADING,
+    add_study,
+    load_studies,
+    parse_studies,
+)
 
 FIXTURE = Path(__file__).parent / "fixtures" / "knight-bishop-mate.pgn"
 
@@ -398,3 +418,192 @@ def test_invisible_emoji_plumbing_is_stripped():
     # Real punctuation and chess symbols must survive.
     assert "’" in safe_text("it’s")
     assert "±" in safe_text("±")
+
+
+# ------------------------------------------------------- sideline colours
+
+BRANCHY = Path(__file__).parent / "fixtures" / "many-sidelines.pgn"
+
+
+@pytest.fixture(scope="module")
+def branchy():
+    """A chapter with five alternatives to one move, and nesting inside them."""
+    return parse_study(BRANCHY.read_text(encoding="utf-8")).chapters[0]
+
+
+def test_every_sideline_gets_its_own_number(branchy):
+    numbers = {s.branch for s in branchy.steps if s.depth}
+    assert 0 not in numbers
+    assert len(numbers) == branchy.variation_count == 10
+    assert all(s.branch == 0 for s in branchy.steps if not s.depth)
+
+
+def test_one_sideline_keeps_one_number_for_all_of_its_moves(branchy):
+    # 2...Nf6 3.Nxe5 d6 ... 4.Nf3 Nxe4 is one sideline, even though a nested
+    # one interrupts it in the middle.
+    labels = [s.move_label() for s in branchy.steps if s.branch == 1]
+    assert labels == ["2...Nf6", "3.Nxe5", "3...d6", "4.Nf3", "4...Nxe4"]
+
+
+def test_siblings_at_one_branch_point_never_share_a_colour(branchy):
+    kids = child_map(branchy)
+    for parent in kids:
+        siblings = [branchy.steps[i] for i in kids[parent]
+                    if branchy.steps[i].starts_variation]
+        slots = [slot_for(s.branch) for s in siblings]
+        assert len(set(slots)) == len(slots), f"colour clash under {parent}"
+
+
+def test_a_nested_sideline_differs_from_the_one_it_sits_in(branchy):
+    for step in branchy.steps:
+        if not step.starts_variation or step.depth < 2:
+            continue
+        # The parent of a nested sideline is a move of the enclosing one.
+        enclosing = branchy.steps[step.line[-2]]
+        assert enclosing.branch and enclosing.branch != step.branch
+        assert slot_for(enclosing.branch) != slot_for(step.branch)
+
+
+def test_notation_blocks_never_mix_two_sidelines(branchy):
+    for block in notation_blocks(branchy):
+        branches = {branchy.steps[i].branch for i in block.step_indices}
+        assert len(branches) <= 1
+        assert branches <= {block.branch}
+
+
+def test_main_line_has_no_sideline_colour():
+    assert color_for(0) is None
+    assert tag_for(0) == "main"
+    assert tag_for(3) == "s3"
+
+
+def test_colours_repeat_only_after_the_whole_palette():
+    slots = {slot_for(branch) for branch in range(1, PALETTE_SIZE + 1)}
+    assert len(slots) == PALETTE_SIZE
+    assert slot_for(PALETTE_SIZE + 1) == slot_for(1)
+
+
+def _luminance(hex_color):
+    from lichess_study_pdf.sidelines import _relative_luminance
+
+    value = hex_color.lstrip("#")
+    return _relative_luminance([int(value[i:i + 2], 16) / 255 for i in (0, 2, 4)])
+
+
+@pytest.mark.parametrize("color", PALETTE, ids=lambda c: f"s{c.slot + 1}")
+def test_every_sideline_colour_is_readable(color):
+    """Move text has to clear 4.5:1 on the page *and* on its own wash."""
+    on_white = 1.05 / (_luminance(color.ink) + 0.05)
+    on_tint = (_luminance(color.tint) + 0.05) / (_luminance(color.ink) + 0.05)
+    assert on_white >= 4.5, f"{color.ink} on white is {on_white:.2f}:1"
+    assert on_tint >= 4.5, f"{color.ink} on {color.tint} is {on_tint:.2f}:1"
+    # And the wash itself must stay a wash, not a highlight.
+    assert _luminance(color.tint) >= 0.72
+
+
+def test_grid_and_book_modes_render_a_branchy_chapter(tmp_path):
+    """The colouring code paths run for real, on every writer that has one."""
+    pypdfium2 = pytest.importorskip("pypdfium2")
+    study = parse_study(BRANCHY.read_text(encoding="utf-8"))
+    for mode in ("grid", "slideshow"):
+        target = tmp_path / f"{mode}.pdf"
+        build_pdf(study, target, evals={}, options=PdfOptions(mode=mode))
+        assert len(pypdfium2.PdfDocument(target)) > 2
+
+
+# ---------------------------------------------------- the home page's list
+
+STUDIES_FILE = Path(__file__).resolve().parent.parent / "studies.txt"
+
+
+def test_the_shipped_studies_file_is_readable():
+    """The list the home page opens on has to parse, names and all."""
+    listing = load_studies(STUDIES_FILE)
+    assert listing.problems == []
+    assert len(listing.entries) >= 5
+    for entry in listing.entries:
+        assert entry.name and entry.name.strip() == entry.name
+        assert entry.study_id
+        assert entry.section        # every seeded study sits under a heading
+
+
+def test_the_private_study_is_listed_by_chapter_url():
+    """A chapter URL is how a private study loads without a token, so the
+    list must keep the chapter id rather than the tidier study URL."""
+    entries = {e.study_id: e for e in load_studies(STUDIES_FILE).entries}
+    fried_liver = entries["i7hMEq7h"]
+    assert fried_liver.chapter_id == "T5rBUcOn"
+    assert fried_liver.private_hint
+
+
+def test_the_parser_forgives_a_hand_edited_file():
+    text = """
+    # a comment
+    ## Openings
+    Named study | https://lichess.org/study/abcd1234
+
+    https://lichess.org/study/efgh5678
+    not a study at all
+    Duplicate | https://lichess.org/study/abcd1234/ch000001
+    """
+    entries, problems = parse_studies(textwrap.dedent(text))
+
+    assert [e.study_id for e in entries] == ["abcd1234", "efgh5678"]
+    assert entries[0].name == "Named study"
+    assert entries[0].section == "Openings"
+    # A bare URL keeps working; the button just shows the id.
+    assert entries[1].name == "efgh5678"
+    # The junk line is reported with its line number, not raised.
+    assert [text for _, text in problems] == ["not a study at all"]
+
+
+def test_saving_a_study_appends_it_once(tmp_path):
+    target = tmp_path / "studies.txt"
+    target.write_text("## Openings\nFirst | https://lichess.org/study/abcd1234\n",
+                      encoding="utf-8")
+
+    entry, added = add_study("https://lichess.org/study/zzzz9999",
+                             "A new study", path=target)
+    assert added and entry.name == "A new study"
+    assert SAVED_HEADING in target.read_text(encoding="utf-8")
+
+    # Saving the same study again changes nothing and reports the first entry.
+    again, added_again = add_study("https://lichess.org/study/zzzz9999",
+                                   "Different name", path=target)
+    assert not added_again
+    assert again.name == "A new study"
+
+    listing = load_studies(target)
+    assert [e.study_id for e in listing.entries] == ["abcd1234", "zzzz9999"]
+
+
+def test_saving_keeps_the_chapter_url_and_cleans_the_name(tmp_path):
+    target = tmp_path / "studies.txt"
+    entry, added = add_study("https://lichess.org/study/abcd1234/ch000001",
+                             "Pipes | and\nnewlines  squashed", path=target)
+    assert added
+    assert entry.chapter_id == "ch000001"
+
+    reloaded = load_studies(target).entries[0]
+    assert reloaded.url.endswith("/ch000001")
+    assert reloaded.name == "Pipes / and newlines squashed"
+
+
+def test_the_studies_api_reads_and_writes_the_list(tmp_path, monkeypatch):
+    target = tmp_path / "studies.txt"
+    target.write_text("## Mine\nOne | https://lichess.org/study/abcd1234\n",
+                      encoding="utf-8")
+    monkeypatch.setenv("LICHESS_STUDIES_FILE", str(target))
+
+    listing = list_studies()
+    assert listing["count"] == 1
+    assert listing["sections"][0]["heading"] == "Mine"
+    assert listing["sections"][0]["studies"][0]["name"] == "One"
+
+    saved = save_study(SaveStudyRequest(url="https://lichess.org/study/zzzz9999",
+                                       name="Two"))
+    assert saved["added"] is True
+    assert list_studies()["count"] == 2
+
+    with pytest.raises(HTTPException):
+        save_study(SaveStudyRequest(url="https://example.com/nope", name="No"))

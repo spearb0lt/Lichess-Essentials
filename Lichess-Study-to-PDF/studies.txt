@@ -1,0 +1,25 @@
+# My studies -- the list on the home page of the web app.
+#
+# One study per line:
+#
+#     Name | URL
+#
+# The name is what the button says, the URL is what it opens.  Anything after
+# a "#" is a comment, "## Something" starts a new section, and blank lines are
+# ignored.  The name is optional: paste a bare URL and the button shows the
+# study id instead.
+#
+# Edit this file whenever you like -- the page re-reads it on every refresh,
+# so there is no need to restart the server.  The star button in the app
+# appends to the "Saved from the app" section at the bottom.
+#
+# For a private study, paste a *chapter* URL (.../study/<id>/<chapter>) the
+# way "Fried Liver Attack Full Guide" does below: the app finds every other
+# chapter from there, with no token.
+
+## Openings
+Fried Liver Attack Full Guide | https://lichess.org/study/i7hMEq7h/T5rBUcOn
+Italian Game (50 Lessons): Two Gambits and a Meeting with Bobby Fischer! | https://lichess.org/study/EY8AUyPd
+🏰 Caro-Kann Defense🔥 | https://lichess.org/study/jtlLwUvh
+♦ All about the Sicilian Defense ♦ | https://lichess.org/study/8c8bmUfy
+Anti-Sicilian Repertoire | https://lichess.org/study/UYLsUjvy

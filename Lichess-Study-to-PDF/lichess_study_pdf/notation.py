@@ -18,6 +18,9 @@ class NotationBlock:
     depth: int
     html: str
     step_indices: tuple = ()
+    #: Sideline number every move in this block belongs to (0 = main line).
+    #: The renderers colour the block by it -- see ``sidelines.py``.
+    branch: int = 0
 
 
 def _move_markup(step, depth: int, force_number: bool) -> str:
@@ -37,7 +40,9 @@ def _move_markup(step, depth: int, force_number: bool) -> str:
 
 
 def _comment_markup(text: str, depth: int) -> str:
-    color = "#4a4a4a" if depth == 0 else "#6a6a6a"
+    # A sideline's prose sits on that sideline's tint, so it is a shade darker
+    # than it would need to be on white -- 5.4:1 there rather than 4.2:1.
+    color = "#4a4a4a" if depth == 0 else "#5a5a5a"
     return f'<i><font color="{color}">{escape(text)}</font></i>'
 
 
@@ -49,6 +54,7 @@ def notation_blocks(chapter, *, max_depth: int | None = None) -> list:
     """
     blocks: list[NotationBlock] = []
     current_depth = 0
+    current_branch = 0
     parts: list[str] = []
     indices: list[int] = []
     # A black move needs its "12..." prefix at the start of a block and after
@@ -63,6 +69,7 @@ def notation_blocks(chapter, *, max_depth: int | None = None) -> list:
                     depth=current_depth,
                     html=" ".join(parts),
                     step_indices=tuple(indices),
+                    branch=current_branch,
                 )
             )
         parts = []
@@ -76,9 +83,11 @@ def notation_blocks(chapter, *, max_depth: int | None = None) -> list:
         if max_depth is not None and step.depth > max_depth:
             continue
 
-        if step.depth != current_depth or step.starts_variation:
+        if (step.depth != current_depth or step.branch != current_branch
+                or step.starts_variation):
             flush()
             current_depth = step.depth
+            current_branch = step.branch
             force_number = True
 
         parts.append(_move_markup(step, step.depth, force_number))

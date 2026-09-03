@@ -79,8 +79,10 @@ LaTeX means the book mode is greyed out. Neither stops the app running.
 
 ### Step 3 — use it
 
-1. Open <http://127.0.0.1:8777>.
-2. Paste a study URL and press **Load study**.
+1. Open <http://127.0.0.1:8777>. It opens on **My studies** — your own list
+   of studies as clickable cards, named, so you can see what you are opening.
+   See [Your studies list](#your-studies-list) below.
+2. Click one, or paste a study URL and press **Load study**.
    For a **private** study, paste a *chapter* URL
    (`https://lichess.org/study/i7hMEq7h/0KOpBPyc`) — every other chapter is
    found automatically, no token needed. See the next section.
@@ -91,6 +93,42 @@ LaTeX means the book mode is greyed out. Neither stops the app running.
 
 Handy: `http://127.0.0.1:8777/?url=<study-url>` loads a study straight away,
 so you can bookmark a study you open often.
+
+### Your studies list
+
+The home page is built from **`studies.txt`**, in this folder. One study per
+line:
+
+```text
+## Openings
+Fried Liver Attack Full Guide | https://lichess.org/study/i7hMEq7h/T5rBUcOn
+Anti-Sicilian Repertoire | https://lichess.org/study/UYLsUjvy
+https://lichess.org/study/EY8AUyPd
+```
+
+- `Name | URL` — the name is what the card says, the URL is what it opens.
+- The name is optional: a bare URL works, the card just shows the study id.
+- `## Something` starts a section, `#` starts a comment, blank lines are
+  ignored.
+- A line that is neither a comment nor a study is reported under the list
+  rather than throwing the rest of it away, so one typo costs you nothing.
+- Put a **chapter** URL in for a private study, as the Fried Liver line does:
+  that is what lets it open without a token.
+
+Two ways to add to it:
+
+- **Edit the file.** The page re-reads it on every refresh — no restart.
+- **Press ☆ Save** in the header while a study is open. It appends the study
+  under a `## Saved from the app` section with its real name filled in.
+  Saving one twice does nothing.
+
+`LICHESS_STUDIES_FILE=/some/other/path.txt` points the app at a different
+list, if you would rather keep yours outside the repository.
+
+There is no Lichess API for the studies you have *liked*, so the list cannot
+be filled from your Lichess favourites automatically. What Lichess does expose
+is every study belonging to an account (`/api/study/by/<username>`), so a list
+of your own studies can be generated if you want one.
 
 ### Step 4 — stop it
 
@@ -180,9 +218,23 @@ A token is still supported and is the documented route — create one with the
 
 ## The four export styles
 
-Every chapter starts on a fresh page in all of them, and sidelines are set in
-brown with a rule down their left edge so nesting reads at a glance — and
-still reads when the page is printed in greyscale.
+Every chapter starts on a fresh page in all of them, and every sideline is
+given its own colour, so two alternatives to the same move never look alike.
+
+Each colour arrives in three matching tones: a **bar** down the left edge of
+the board or notation block, a mild **wash** behind it, and the **ink** of its
+moves. Numbering is chapter-wide — a branch point hands its alternatives a
+consecutive run of colours (which the palette spaces ~105° apart on the wheel),
+and a sideline nested inside another gets one of its own, so nothing that a
+reader sees at once shares a colour. The palette holds 24; after that colours
+repeat, which only ever affects sidelines pages apart.
+
+Every sideline also carries its number — `s1`, `s2`, … printed where it opens,
+in the grid cell, in the breadcrumb — so the colour has a name. That, the bar,
+the indent and the depth dots are all shape rather than hue, which is what
+keeps nesting and identity readable in a greyscale print or for a colour-blind
+reader. Grid pages carry a legend of the sidelines shown on them along the
+footer.
 
 ### `--mode grid` (default) — twelve boards to a page
 

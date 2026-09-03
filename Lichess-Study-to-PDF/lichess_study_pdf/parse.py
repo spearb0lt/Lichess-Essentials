@@ -96,6 +96,12 @@ class Step:
     #: Indices of every step forming the line from the chapter start to here,
     #: this step included.  Lets the renderer show "the line you are in".
     line: tuple = ()
+    #: Which sideline this step belongs to: 0 for the main line, otherwise the
+    #: 1-based number of its branch within the chapter.  Every move of one
+    #: sideline shares a number, a nested sideline gets its own, and siblings
+    #: at a branch point are always numbered consecutively -- which is what
+    #: lets the renderers colour them apart.  See ``sidelines.py``.
+    branch: int = 0
 
     @property
     def is_mainline(self) -> bool:
@@ -133,6 +139,11 @@ class Chapter:
     @property
     def variation_count(self) -> int:
         return sum(1 for s in self.steps if s.starts_variation)
+
+    @property
+    def branch_count(self) -> int:
+        """Highest sideline number in the chapter (0 if there are none)."""
+        return max((s.branch for s in self.steps), default=0)
 
 
 @dataclass
@@ -176,7 +187,7 @@ def walk_chapter(game: chess.pgn.Game) -> list:
         )
     )
 
-    def emit(node, parent_board, depth, label, starts_variation, line):
+    def emit(node, parent_board, depth, label, starts_variation, line, branch):
         move = node.move
         san = parent_board.san(move)
         fen_before = parent_board.fen()
@@ -206,11 +217,19 @@ def walk_chapter(game: chess.pgn.Game) -> list:
                 last_move=(move.from_square, move.to_square),
                 starts_variation=starts_variation,
                 line=line,
+                branch=branch,
             )
         )
         return new_board
 
-    def descend(node, parent_board, depth, label, prefix):
+    # Hands out sideline numbers.  A branch point takes a consecutive run of
+    # them for all of its alternatives *before* anything descends into the
+    # first one, so siblings stay adjacent in the palette however deeply the
+    # earlier ones nest.
+    branch_counter = 0
+
+    def descend(node, parent_board, depth, label, prefix, branch):
+        nonlocal branch_counter
         current_node = node
         current_board = parent_board
         current_prefix = prefix
@@ -219,30 +238,36 @@ def walk_chapter(game: chess.pgn.Game) -> list:
             children = list(current_node.variations)
             main = children[0]
 
-            # 1. the move that continues the line we are on
+            # 1. the move that continues the line we are on -- same sideline
             main_prefix = current_prefix + (len(steps),)
             main_board = emit(
-                main, current_board, depth, label, False, main_prefix
+                main, current_board, depth, label, False, main_prefix, branch
             )
 
-            # 2. every sideline branching from the same parent
-            for alt in children[1:]:
+            # 2. every sideline branching from the same parent, each its own
+            alts = children[1:]
+            numbers = range(branch_counter + 1, branch_counter + 1 + len(alts))
+            branch_counter += len(alts)
+
+            for alt, alt_branch in zip(alts, numbers):
                 move_number = current_board.fullmove_number
                 dots = "." if current_board.turn == chess.WHITE else "..."
                 alt_san = current_board.san(alt.move)
                 alt_label = f"{label} > {move_number}{dots}{alt_san}"
                 alt_prefix = current_prefix + (len(steps),)
                 alt_board = emit(
-                    alt, current_board, depth + 1, alt_label, True, alt_prefix
+                    alt, current_board, depth + 1, alt_label, True, alt_prefix,
+                    alt_branch,
                 )
-                descend(alt, alt_board, depth + 1, alt_label, alt_prefix)
+                descend(alt, alt_board, depth + 1, alt_label, alt_prefix,
+                        alt_branch)
 
             # 3. carry on down the line we were following
             current_node = main
             current_board = main_board
             current_prefix = main_prefix
 
-    descend(game, board, 0, "Main line", (0,))
+    descend(game, board, 0, "Main line", (0,), 0)
     return steps
 
 

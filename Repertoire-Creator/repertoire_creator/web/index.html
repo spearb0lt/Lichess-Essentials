@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repertoire Creator</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%99%9E%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">&#9816;</span>
+    <span>Repertoire <span class="dim">Creator</span></span>
+  </div>
+
+  <div class="workspace">
+    <button type="button" id="mode-rep" class="seg active">Repertoires</button>
+    <button type="button" id="mode-uni" class="seg">Universal</button>
+  </div>
+
+  <div class="picker" id="picker-rep">
+    <select id="rep-select" title="Choose a repertoire"></select>
+    <span id="rep-color" class="pill"></span>
+    <button type="button" id="btn-new" class="ghost">New</button>
+    <button type="button" id="btn-import" class="ghost">Import</button>
+  </div>
+
+  <div class="topbar-right">
+    <button type="button" id="git-pill" class="pill git" title="Auto-commit status">git</button>
+    <span id="dirty-flag" class="pill warn hidden">unpushed changes</span>
+    <button type="button" id="btn-token" class="ghost">Token</button>
+    <button type="button" id="btn-push" class="primary">Push to Lichess</button>
+    <button type="button" id="btn-export" class="ghost">PDF</button>
+  </div>
+</header>
+
+<div id="status" class="status hidden"></div>
+
+<main id="app" class="app">
+
+  <!-- ------------------------------------------------------- left panel -->
+  <aside class="chapters">
+    <div class="panel-head">
+      <h2 id="rep-name">No repertoire</h2>
+      <p id="rep-meta" class="dim small"></p>
+    </div>
+    <ol id="chapter-list" class="chapter-list"></ol>
+    <div class="panel-foot">
+      <button type="button" id="btn-add-chapter" class="block ghost">Add chapter</button>
+      <a id="pgn-link" class="block ghost" download>Download PGN</a>
+      <a id="study-link" class="block link hidden" target="_blank" rel="noopener">
+        Open the study on Lichess
+      </a>
+    </div>
+  </aside>
+
+  <!-- ---------------------------------------------------------- board -->
+  <section class="boardarea">
+    <div id="turn-banner" class="turn-banner">
+      <span id="turn-text"></span>
+      <span class="banner-right">
+        <button type="button" id="btn-assist" class="assist-toggle hidden"
+                title="Show what your book plays here as you move">Assist: off</button>
+        <span id="node-eval" class="dim small"></span>
+      </span>
+    </div>
+
+    <div id="assist-line" class="assist-line hidden"></div>
+
+    <div class="board-wrap">
+      <div id="evalbar" class="evalbar" title="Engine evaluation">
+        <div id="evalfill" class="evalfill"></div>
+        <span id="evaltext" class="evaltext"></span>
+      </div>
+      <div id="board-box" class="board-box">
+        <img id="board" class="board" alt="Chess position">
+        <div id="squares" class="squares"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button type="button" id="btn-first" title="Start (Home)">&#124;&#9664;</button>
+      <button type="button" id="btn-prev" title="Back (Left arrow)">&#9664;</button>
+      <button type="button" id="btn-next" title="Forward (Right arrow)">&#9654;</button>
+      <button type="button" id="btn-last" title="End of the line (End)">&#9654;&#124;</button>
+      <button type="button" id="btn-flip" title="Flip the board (F)">&#8645;</button>
+      <span class="spacer"></span>
+      <button type="button" id="btn-promote" title="Make this the move you play (M)">
+        Make main
+      </button>
+      <button type="button" id="btn-delete" class="danger"
+              title="Delete this move and everything after it (Delete)">Delete</button>
+    </div>
+
+    <div class="entry">
+      <input id="line-input" type="text" spellcheck="false" autocomplete="off"
+             placeholder="Type moves to add here &mdash; 3... Nc6 4. Bc4 Bc5, or paste a PGN line">
+      <button type="button" id="btn-line" class="primary">Add</button>
+    </div>
+
+    <!-- engine suggestions -->
+    <div class="lines-panel">
+      <div class="lines-head">
+        <span class="dim small">Engine suggestions</span>
+        <label class="inline small">
+          top
+          <input id="lines-count" type="number" min="1" max="5" step="1" value="2">
+        </label>
+        <span id="lines-source" class="dim small"></span>
+      </div>
+      <div id="lines-body" class="lines-body"></div>
+    </div>
+
+    <div class="annotate">
+      <div class="nag-row" id="nag-row"></div>
+      <textarea id="comment" rows="2" spellcheck="true"
+                placeholder="A note on this move &mdash; why you play it, what to watch for"></textarea>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------- side -->
+  <section class="side">
+    <nav class="tabs">
+      <button type="button" class="tab active" data-tab="moves">Moves</button>
+      <button type="button" class="tab" data-tab="book">Book</button>
+      <button type="button" class="tab" data-tab="gaps">Gaps <span id="gap-count" class="count"></span></button>
+      <button type="button" class="tab" data-tab="transpositions">Transpositions</button>
+      <button type="button" class="tab" data-tab="drill">Drill <span id="drill-count" class="count"></span></button>
+    </nav>
+
+    <div id="tab-moves" class="tabpanel">
+      <div id="movetree" class="movetree"></div>
+    </div>
+
+    <div id="tab-book" class="tabpanel hidden">
+      <div id="book-body" class="listing"></div>
+    </div>
+
+    <div id="tab-gaps" class="tabpanel hidden">
+      <div class="panel-actions" id="scan-row">
+        <button type="button" id="btn-scan" class="ghost small-btn">
+          Scan with the opening explorer
+        </button>
+        <label class="inline small">
+          at least
+          <input id="scan-share" type="number" min="0.5" max="25" step="0.5" value="2">
+          % of games
+        </label>
+      </div>
+      <div id="gaps-body" class="listing"></div>
+    </div>
+
+    <div id="tab-transpositions" class="tabpanel hidden">
+      <div id="trans-body" class="listing"></div>
+    </div>
+
+    <div id="tab-drill" class="tabpanel hidden">
+      <div id="drill-body" class="listing"></div>
+    </div>
+  </section>
+</main>
+
+<!-- --------------------------------------------------------- dialogs -->
+
+<dialog id="dlg-new">
+  <form method="dialog" class="dlg">
+    <h3>New repertoire</h3>
+    <label>Name <input id="new-name" required maxlength="100"
+                       placeholder="White &mdash; Italian"></label>
+    <label>You play
+      <select id="new-color">
+        <option value="white">White</option>
+        <option value="black">Black</option>
+      </select>
+    </label>
+    <p class="dim small">
+      Colour is what makes gap detection and drill mode work: the app needs to
+      know which moves are yours.
+    </p>
+    <menu>
+      <button value="cancel" class="ghost">Cancel</button>
+      <button value="ok" class="primary" id="new-ok">Create</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-import">
+  <form method="dialog" class="dlg">
+    <h3>Import</h3>
+    <label>Lichess study URL
+      <input id="import-url" placeholder="https://lichess.org/study/abcd1234">
+    </label>
+    <label>You play
+      <select id="import-color">
+        <option value="white">White</option>
+        <option value="black">Black</option>
+      </select>
+    </label>
+    <p class="dim small">
+      Chapter ids come across with it, so pushing later updates that same
+      study instead of making a copy. Private studies need a token.
+    </p>
+    <details>
+      <summary class="small">or paste PGN instead</summary>
+      <label>Name <input id="import-name" placeholder="Black &mdash; Caro-Kann"></label>
+      <textarea id="import-pgn" rows="6"
+                placeholder="One game per chapter"></textarea>
+    </details>
+    <menu>
+      <button value="cancel" class="ghost">Cancel</button>
+      <button value="ok" class="primary" id="import-ok">Import</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-token">
+  <form method="dialog" class="dlg">
+    <h3>Lichess token</h3>
+    <p class="dim small">
+      Pushing needs a token with the <b>study:write</b> scope. It is kept in
+      this app&rsquo;s memory only and is forgotten when the server stops. To have
+      it found automatically, put it in <code>~/.lichess_token</code> or the
+      <code>LICHESS_TOKEN</code> environment variable.
+    </p>
+    <a id="token-link" target="_blank" rel="noopener" class="link small">
+      Create a token with the right scopes
+    </a>
+    <label>Token <input id="token-input" type="password" spellcheck="false"
+                        placeholder="lip_..."></label>
+    <p id="token-status" class="small"></p>
+    <menu>
+      <button value="cancel" class="ghost">Close</button>
+      <button value="ok" class="primary" id="token-ok">Use this token</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-push">
+  <form method="dialog" class="dlg">
+    <h3>Push to Lichess</h3>
+    <p id="push-target" class="small"></p>
+    <label class="inline">
+      <input type="checkbox" id="push-force">
+      Push every chapter, even unchanged ones
+    </label>
+    <label>Visibility of a study created now
+      <select id="push-visibility">
+        <option value="unlisted">Unlisted &mdash; anyone with the link</option>
+        <option value="private">Private &mdash; members only</option>
+        <option value="public">Public &mdash; listed on Lichess</option>
+      </select>
+    </label>
+    <p class="warn-box small">
+      Local is the source of truth. A push replaces the moves of each chapter
+      on Lichess, so anything you edited there in the browser is overwritten.
+    </p>
+    <div id="push-report" class="listing small"></div>
+    <menu>
+      <button value="cancel" class="ghost">Close</button>
+      <button value="ok" class="primary" id="push-ok">Push</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-export">
+  <form method="dialog" class="dlg">
+    <h3>Export PDF</h3>
+    <label>Layout
+      <select id="export-mode"></select>
+    </label>
+    <label class="inline"><input type="checkbox" id="export-evals" checked>
+      Eval bars from the baked evaluations</label>
+    <label class="inline"><input type="checkbox" id="export-notation" checked>
+      Readable notation section</label>
+    <label class="inline"><input type="checkbox" id="export-steps" checked>
+      Diagram pages</label>
+    <p id="export-note" class="dim small"></p>
+    <menu>
+      <button value="cancel" class="ghost">Cancel</button>
+      <button value="ok" class="primary" id="export-ok">Build</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-git">
+  <form method="dialog" class="dlg">
+    <h3>Saving to git</h3>
+    <p class="dim small">
+      Your work is written to disk the moment you make it, always. This is the
+      other half: committing that folder and pushing it, so the repertoire
+      survives the machine.
+    </p>
+    <label class="inline"><input type="checkbox" id="git-enabled">
+      Commit changes automatically</label>
+    <label class="inline"><input type="checkbox" id="git-push">
+      and push them to the remote</label>
+    <label>Remote <input id="git-remote" placeholder="origin"></label>
+    <label>Branch <input id="git-branch" placeholder="(the branch you are on)"></label>
+    <label>Wait this long after the last change, in seconds
+      <input id="git-debounce" type="number" min="1" max="600" step="1">
+    </label>
+    <p class="dim small">
+      Only the repertoires folder is committed, with an explicit pathspec, so
+      anything else you have in flight in this repository is left alone.
+    </p>
+    <div id="git-report" class="small"></div>
+    <menu>
+      <button value="cancel" class="ghost">Close</button>
+      <button type="button" class="ghost" id="git-now">Commit now</button>
+      <button value="ok" class="primary" id="git-ok">Save settings</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-uniexport">
+  <form method="dialog" class="dlg">
+    <h3>Publish the universal book</h3>
+    <label>Study name <input id="uni-name" value="Universal book" maxlength="100"></label>
+    <label>Visibility of a study created now
+      <select id="uni-visibility">
+        <option value="unlisted">Unlisted</option>
+        <option value="private">Private</option>
+        <option value="public">Public</option>
+      </select>
+    </label>
+    <p class="dim small">
+      Your recordings are merged and split into one chapter per opening move.
+      Chapters that came from a repertoire are not included &mdash; publish those
+      from the repertoire itself so Lichess does not end up with two copies.
+    </p>
+    <div id="uni-report" class="listing small"></div>
+    <menu>
+      <button value="cancel" class="ghost">Close</button>
+      <button value="ok" class="primary" id="uni-ok">Publish</button>
+    </menu>
+  </form>
+</dialog>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

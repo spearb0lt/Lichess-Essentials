@@ -37,6 +37,8 @@ from .parse import parse_study
 from .pdf import PdfOptions, build_pdf
 from .pdf_latex import LatexBuildError, LatexUnavailable, find_latex
 from .render import build_board_svg
+from .sidelines import PALETTE
+from .studies import add_study, load_studies
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
 CACHE_FILE = Path.home() / ".cache" / "lichess-study-pdf" / "evals.json"
@@ -115,6 +117,8 @@ def _step_json(step) -> dict:
         "arrows": step.arrows,
         "lastMove": list(step.last_move) if step.last_move else None,
         "startsVariation": step.starts_variation,
+        # Which sideline this move belongs to; the browser colours by it.
+        "branch": step.branch,
         "line": list(step.line),
     }
 
@@ -131,8 +135,10 @@ def _chapter_json(chapter) -> dict:
         "variationCount": chapter.variation_count,
         "steps": [_step_json(s) for s in chapter.steps],
         "children": {str(k): v for k, v in child_map(chapter).items()},
+        "branchCount": chapter.branch_count,
         "notation": [
-            {"depth": b.depth, "html": b.html, "steps": list(b.step_indices)}
+            {"depth": b.depth, "html": b.html, "steps": list(b.step_indices),
+             "branch": b.branch}
             for b in notation_blocks(chapter)
         ],
     }
@@ -144,6 +150,13 @@ def _chapter_json(chapter) -> dict:
 class LoadRequest(BaseModel):
     url: str
     token: str | None = None
+
+
+class SaveStudyRequest(BaseModel):
+    """Add a study to the home page list."""
+
+    url: str
+    name: str | None = None
 
 
 class EvalOneRequest(BaseModel):
@@ -227,7 +240,52 @@ def load_study(request: LoadRequest) -> dict:
         "url": ref.url,
         "viaChapters": bool(ref.chapter_id),
         "chapters": [_chapter_json(c) for c in study.chapters],
+        # The sideline palette, so the page paints the same colours the PDF
+        # writers do.  Slot = (branch - 1) % len(palette).
+        "sidelinePalette": [
+            {"ink": c.ink, "rule": c.rule, "tint": c.tint} for c in PALETTE
+        ],
     }
+
+
+def _entry_json(entry) -> dict:
+    return {
+        "name": entry.name,
+        "url": entry.url,
+        "studyId": entry.study_id,
+        "chapterId": entry.chapter_id,
+        "section": entry.section,
+        "viaChapter": entry.private_hint,
+    }
+
+
+@app.get("/api/studies")
+def list_studies() -> dict:
+    """The home page list, re-read from disk so edits need no restart."""
+    listing = load_studies()
+    return {
+        "path": str(listing.path),
+        "sections": [
+            {"heading": heading, "studies": [_entry_json(e) for e in items]}
+            for heading, items in listing.sections
+        ],
+        "count": len(listing.entries),
+        # Lines that are neither comments nor studies, so a typo in the file
+        # shows up in the UI instead of silently dropping a study.
+        "problems": [{"line": n, "text": t} for n, t in listing.problems],
+    }
+
+
+@app.post("/api/studies")
+def save_study(request: SaveStudyRequest) -> dict:
+    """Append a study to the list. Saving one twice is a no-op."""
+    try:
+        entry, added = add_study(request.url, request.name or "")
+    except StudyFetchError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(500, f"Could not write the studies file: {exc}") from exc
+    return {"added": added, "study": _entry_json(entry)}
 
 
 @app.get("/api/board")

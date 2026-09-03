@@ -36,6 +36,7 @@ from .notation import (
     notation_blocks,
 )
 from .render import board_drawing, draw_eval_bar
+from .sidelines import PALETTE, slot_for, tag_for
 
 # ------------------------------------------------------------------ palette
 
@@ -48,6 +49,44 @@ ACCENT = colors.HexColor("#4a7c59")
 VARIATION_INK = colors.HexColor("#8a5a2b")
 HILITE = colors.HexColor("#d8e6c4")
 HILITE_EDGE = colors.HexColor("#8fae6f")
+
+
+@dataclass(frozen=True)
+class _Tones:
+    """One sideline colour, as ReportLab colours ready to set."""
+
+    ink: colors.Color        # move text
+    rule: colors.Color       # the bar beside a board or a block
+    tint: colors.Color       # background wash
+
+
+#: ``sidelines.PALETTE`` converted once, so drawing never parses hex.
+SIDELINE_TONES = tuple(
+    _Tones(colors.HexColor(c.ink),
+           colors.HexColor(c.rule),
+           colors.HexColor(c.tint))
+    for c in PALETTE
+)
+
+#: Used only if a step somehow reaches the writers with a depth but no
+#: sideline number -- the old single-brown look, rather than nothing at all.
+FALLBACK_TONES = _Tones(VARIATION_INK, VARIATION_INK,
+                        colors.HexColor("#f4efe7"))
+
+
+def sideline_tones(step) -> _Tones | None:
+    """The colour of the sideline ``step`` belongs to, or ``None`` for the
+    main line."""
+    if step.branch:
+        return SIDELINE_TONES[slot_for(step.branch)]
+    return FALLBACK_TONES if step.depth else None
+
+
+def branch_tones(branch: int, depth: int = 0) -> _Tones | None:
+    """Same, addressed by sideline number -- for notation blocks."""
+    if branch:
+        return SIDELINE_TONES[slot_for(branch)]
+    return FALLBACK_TONES if depth else None
 
 
 @dataclass
@@ -189,6 +228,26 @@ class StudyPdf:
                x1 if x1 is not None else self.page_width - 32, y)
         c.restoreState()
 
+    def _sideline_backdrop(self, tones, x, y_top, width, height,
+                           pad: float = 2.6) -> None:
+        """Wash the sideline's colour behind a block, with its bar on the left.
+
+        This is the no-room-for-a-margin-rule case: in flowing notation the
+        tint is what separates one sideline from the next, and the bar down
+        its left edge keeps the boundary crisp.
+        """
+        if tones is None or height <= 0:
+            return
+        c = self.canvas
+        c.saveState()
+        c.setFillColor(tones.tint)
+        c.rect(x - 6.0, y_top - height - pad, width + 6.0,
+               height + pad * 2, stroke=0, fill=1)
+        c.setFillColor(tones.rule)
+        c.rect(x - 6.0, y_top - height - pad, 1.9,
+               height + pad * 2, stroke=0, fill=1)
+        c.restoreState()
+
     def _paragraph(self, html, style, x, y_top, width, max_height):
         """Draw a paragraph anchored at its top edge. Returns the height used."""
         para = Paragraph(html, style)
@@ -261,6 +320,14 @@ class StudyPdf:
             tips.append(
                 "The bar beside each board is the engine evaluation, White "
                 "at the bottom."
+            )
+        if any(c.variation_count for c in chapters):
+            tips.append(
+                "Every sideline has its own colour - the bar beside the "
+                "board, the wash behind its moves and the move text all "
+                "share it. Two alternatives to the same move are never the "
+                "same colour, and each carries a number (s1, s2, ...) so it "
+                "is still identifiable in a greyscale print."
             )
         tips.append("Chapter names in the contents are clickable.")
         for tip in tips:
@@ -373,18 +440,28 @@ class StudyPdf:
 
         for block in blocks:
             indent = min(block.depth, 4) * 11.0
+            tones = branch_tones(block.branch, block.depth)
             style = ParagraphStyle(
-                f"n{block.depth}",
+                f"n{block.depth}-{block.branch}",
                 parent=self.notation_style,
                 leftIndent=indent,
                 fontSize=9.0 if block.depth == 0 else 8.4,
                 leading=12.6 if block.depth == 0 else 11.4,
-                textColor=INK if block.depth == 0 else VARIATION_INK,
+                textColor=INK if tones is None else tones.ink,
             )
+            html = block.html
+            # Name the sideline once, where it opens, so a greyscale print
+            # still says which of the colours this block was.
+            if block.branch and block.step_indices and chapter.steps[
+                    block.step_indices[0]].starts_variation:
+                swatch = PALETTE[slot_for(block.branch)]
+                html = (f'<font size="6.6" color="{swatch.ink}">'
+                        f'{tag_for(block.branch)}</font> ') + html
+
             # notation_blocks() also feeds the browser, where emoji are fine,
             # so it does no font sanitising of its own. Markup tags are pure
             # ASCII, so running the whole string through safe_text is safe.
-            para = Paragraph(self._text(block.html), style)
+            para = Paragraph(self._text(html), style)
             _, height = para.wrap(column_width, self.page_height)
 
             if y - height < bottom:
@@ -400,10 +477,17 @@ class StudyPdf:
                                 next_column()
                                 piece.wrap(column_width, y - bottom)
                                 _, piece_height = piece.wrap(column_width, y - bottom)
+                            self._sideline_backdrop(
+                                tones, x + indent, y, column_width - indent,
+                                piece_height,
+                            )
                             piece.drawOn(c, x, y - piece_height)
                             y -= piece_height + 4
                         continue
 
+            self._sideline_backdrop(
+                tones, x + indent, y, column_width - indent, height,
+            )
             para.drawOn(c, x, y - height)
             y -= height + 4
 
@@ -522,9 +606,34 @@ class StudyPdf:
         self._rule(46, 34, self.page_width - 34, colors.HexColor("#e8e4dc"))
         c.setFillColor(FAINT)
         c.setFont(fonts.FONT_REGULAR, 7.8)
-        c.drawString(34, 32, self._text(
-            "Main line in black, sidelines in brown with a rule down the left."
-        ))
+        note = "Main line in black.  Sidelines on this page:"
+        c.drawString(34, 32, self._text(note))
+        x = 34 + pdfmetrics.stringWidth(note, fonts.FONT_REGULAR, 7.8) + 8
+
+        # A swatch per sideline shown above, so the colours name themselves.
+        seen: list = []
+        for step in chapter.steps[start:start + count]:
+            if step.branch and step.branch not in seen:
+                seen.append(step.branch)
+
+        room = self.page_width - 34 - 150.0 - 72.0
+        if not seen:
+            c.drawString(x, 32, self._text("none"))
+        for branch in seen:
+            tones = branch_tones(branch)
+            tag = self._text(tag_for(branch))
+            width = 8.0 + pdfmetrics.stringWidth(tag, fonts.FONT_BOLD, 7.4) + 7.0
+            if x + width > room:
+                c.setFillColor(FAINT)
+                c.setFont(fonts.FONT_REGULAR, 7.8)
+                c.drawString(x, 32, "...")
+                break
+            c.setFillColor(tones.rule)
+            c.rect(x, 31.2, 6.0, 6.0, stroke=0, fill=1)
+            c.setFillColor(tones.ink)
+            c.setFont(fonts.FONT_BOLD, 7.4)
+            c.drawString(x + 8.0, 32, tag)
+            x += width
 
         bar_w = 150.0
         bar_x = self.page_width - 34 - bar_w
@@ -541,8 +650,9 @@ class StudyPdf:
     def _grid_cell(self, chapter, step, cell_x, cell_top,
                    cell_w, cell_h, board) -> None:
         c = self.canvas
-        sideline = step.depth > 0
-        ink = VARIATION_INK if sideline else INK
+        tones = sideline_tones(step)
+        sideline = tones is not None
+        ink = tones.ink if sideline else INK
 
         evaluation = self._eval_for(step)
         bar_w = 5.0
@@ -553,14 +663,26 @@ class StudyPdf:
         board_x = cell_x + (cell_w - span) / 2.0 + (bar_w + 4 if show_bar else 0)
         board_y = cell_top - board
 
-        # A rule down the left edge marks a sideline, so depth survives even
-        # when the page is printed in greyscale.
+        # Each sideline owns a colour: a wash over its cells so a run of them
+        # reads as one line on a sheet of twelve, and a bar down the left edge
+        # so nesting still survives a greyscale print.  The number beside it
+        # says *which* sideline, for the same reason.
         if sideline:
-            c.setFillColor(VARIATION_INK)
-            c.rect(cell_x + 2, board_y - 22, 1.8, board + 20, stroke=0, fill=1)
-            depth_x = cell_x + 6
+            c.setFillColor(tones.tint)
+            c.roundRect(cell_x + 1, cell_top - cell_h + 6,
+                        cell_w - 2, cell_h - 8, 4, stroke=0, fill=1)
+            c.setFillColor(tones.rule)
+            c.rect(cell_x + 2, board_y - 22, 2.4, board + 20, stroke=0, fill=1)
+
+            tag = self._text(tag_for(step.branch))
+            c.setFont(fonts.FONT_BOLD, 6.2)
+            c.setFillColor(tones.ink)
+            c.drawString(cell_x + 7, cell_top - 6, tag)
+            depth_x = (cell_x + 7
+                       + pdfmetrics.stringWidth(tag, fonts.FONT_BOLD, 6.2)
+                       + 2.5)
             c.setFont(fonts.FONT_REGULAR, 6)
-            c.setFillColor(FAINT)
+            c.setFillColor(tones.rule)
             for level in range(min(step.depth, 4)):
                 c.drawString(depth_x + level * 3.2, cell_top - 6, "•")
 
@@ -648,6 +770,12 @@ class StudyPdf:
                           self._text(f"position {position + 1} of {total}"))
         self._rule(height - 64, board_x, width - 34)
 
+        # --- the sideline's colour, as a bar beside the board
+        tones = sideline_tones(step)
+        if tones is not None:
+            c.setFillColor(tones.rule)
+            c.rect(board_x - 9, board_y, 3.0, board, stroke=0, fill=1)
+
         # --- board
         drawing = board_drawing(
             step.fen, board,
@@ -668,7 +796,28 @@ class StudyPdf:
 
         # --- current move headline
         y = height - 92
-        c.setFillColor(INK if step.is_mainline else VARIATION_INK)
+        crumb = step.line_label if step.depth else "Main line"
+        if step.depth:
+            crumb = (f"{tag_for(step.branch)} · sideline "
+                     f"(depth {step.depth}) · {crumb}")
+        crumb_lines = _wrap_plain(
+            self._text(crumb), fonts.FONT_REGULAR, 8, col_w
+        )[:2]
+
+        # There is no margin to rule here, so the headline and its breadcrumb
+        # sit on a wash of the sideline's colour instead -- same colour as the
+        # bar beside the board, so the two read as one thing.
+        if tones is not None:
+            chip_top = y + 21.0
+            chip_bottom = y - 26.0 - 10.0 * (len(crumb_lines) - 1)
+            c.setFillColor(tones.tint)
+            c.roundRect(col_x - 9, chip_bottom, col_w + 9,
+                        chip_top - chip_bottom, 5, stroke=0, fill=1)
+            c.setFillColor(tones.rule)
+            c.rect(col_x - 9, chip_bottom, 3.0,
+                   chip_top - chip_bottom, stroke=0, fill=1)
+
+        c.setFillColor(INK if tones is None else tones.ink)
         c.setFont(fonts.FONT_BOLD, 21)
         headline = step.move_label() if step.san else "Starting position"
         c.drawString(col_x, y, self._text(headline))
@@ -687,12 +836,9 @@ class StudyPdf:
 
         # --- breadcrumb
         y -= 20
-        c.setFillColor(MUTED)
+        c.setFillColor(MUTED if tones is None else tones.ink)
         c.setFont(fonts.FONT_REGULAR, 8)
-        crumb = step.line_label if step.depth else "Main line"
-        if step.depth:
-            crumb = f"sideline (depth {step.depth}) · {crumb}"
-        for line in _wrap_plain(self._text(crumb), fonts.FONT_REGULAR, 8, col_w)[:2]:
+        for line in crumb_lines:
             c.drawString(col_x, y, line)
             y -= 10
 
@@ -711,12 +857,29 @@ class StudyPdf:
             c.setFont(fonts.FONT_REGULAR, 7.6)
             c.drawString(col_x, y, self._text("Also played here:"))
             y -= 11
-            c.setFillColor(VARIATION_INK)
-            c.setFont(fonts.FONT_REGULAR, 8.4)
-            text = "   ".join(s.move_label() for s in siblings[:6])
-            for line in _wrap_plain(self._text(text), fonts.FONT_REGULAR, 8.4, col_w)[:2]:
-                c.drawString(col_x, y, line)
-                y -= 10
+            # Each alternative in the colour of the sideline it opens, so the
+            # reader can match it to the page it will arrive on.
+            cursor = col_x
+            for sibling in siblings[:6]:
+                sibling_tones = sideline_tones(sibling)
+                label = self._text(
+                    f"{tag_for(sibling.branch)} {sibling.move_label()}"
+                    if sibling.branch else sibling.move_label()
+                )
+                token = pdfmetrics.stringWidth(label, fonts.FONT_REGULAR, 8.4)
+                if cursor + token > col_x + col_w:
+                    cursor = col_x
+                    y -= 11
+                if sibling_tones is not None:
+                    c.setFillColor(sibling_tones.tint)
+                    c.roundRect(cursor - 2.5, y - 2.6, token + 5.0, 12.0,
+                                2.5, stroke=0, fill=1)
+                c.setFillColor(INK if sibling_tones is None
+                               else sibling_tones.ink)
+                c.setFont(fonts.FONT_REGULAR, 8.4)
+                c.drawString(cursor, y, label)
+                cursor += token + 12.0
+            y -= 10
 
         # --- comment panel
         floor = board_y
@@ -738,7 +901,7 @@ class StudyPdf:
                 c.setLineWidth(0.6)
                 c.roundRect(col_x, panel_bottom, col_w, panel_height,
                             5, stroke=1, fill=1)
-                c.setFillColor(ACCENT)
+                c.setFillColor(ACCENT if tones is None else tones.rule)
                 c.rect(col_x, panel_bottom, 2.6, panel_height, stroke=0, fill=1)
                 para.drawOn(c, col_x + 13, panel_top - 11 - text_height)
 
@@ -802,7 +965,9 @@ class StudyPdf:
             elif is_future:
                 c.setFillColor(FAINT)
             elif item.depth:
-                c.setFillColor(VARIATION_INK)
+                item_tones = sideline_tones(item)
+                c.setFillColor(VARIATION_INK if item_tones is None
+                               else item_tones.ink)
             else:
                 c.setFillColor(colors.HexColor("#4a453e"))
 
