@@ -1,0 +1,21 @@
+# Virtual environment (created with: python -m venv .lichess)
+.lichess/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# App output and local caches
+Lichess-Study-to-PDF/out/
+Lichess-Study-to-PDF/engine/*
+!Lichess-Study-to-PDF/engine/.gitkeep
+*.pdf
+!Lichess-Study-to-PDF/docs/*.pdf
+
+# Never commit a Lichess API token
+.lichess_token
+.env

@@ -1,0 +1,7 @@
+.git
+.lichess
+__pycache__
+*.pyc
+tests
+engine
+*.pdf

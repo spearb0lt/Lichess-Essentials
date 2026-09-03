@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lichess Study to PDF</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">&#9822;</span>
+    <span>Lichess Study <span class="dim">to</span> PDF</span>
+  </div>
+  <form id="load-form" class="loader">
+    <input id="study-url" type="text" spellcheck="false"
+           placeholder="https://lichess.org/study/i7hMEq7h  (or a chapter URL)"
+           autocomplete="off">
+    <button type="submit" id="load-btn">Load study</button>
+    <button type="button" id="token-toggle" class="ghost" title="Private studies">Token</button>
+  </form>
+</header>
+
+<div id="token-row" class="token-row hidden">
+  <input id="token" type="password" spellcheck="false"
+         placeholder="Lichess API token with the study:read scope (optional)">
+  <span class="hint">
+    Private studies usually work without one &mdash; paste a <b>chapter</b> URL
+    and every other chapter is found automatically.
+    <a href="https://lichess.org/account/oauth/token/create?scopes[]=study:read"
+       target="_blank" rel="noopener">Create a token</a> if that fails.
+  </span>
+</div>
+
+<div id="status" class="status hidden"></div>
+
+<main id="app" class="app hidden">
+
+  <aside class="chapters">
+    <div class="panel-head">
+      <h2 id="study-name">Study</h2>
+      <p id="study-meta" class="dim small"></p>
+    </div>
+    <ol id="chapter-list" class="chapter-list"></ol>
+    <div class="panel-foot">
+      <button id="export-open" class="primary block">Export PDF</button>
+      <a id="pgn-link" class="ghost block" download>Download PGN</a>
+    </div>
+  </aside>
+
+  <section class="boardarea">
+    <div id="free-banner" class="free-banner hidden">
+      <span id="free-text">Off the study line</span>
+      <button id="free-back" class="small-btn">Back to the line</button>
+    </div>
+
+    <div class="board-wrap">
+      <div id="evalbar" class="evalbar" title="Engine evaluation">
+        <div id="evalfill" class="evalfill"></div>
+        <span id="evaltext" class="evaltext"></span>
+      </div>
+
+      <div id="board-box" class="board-box">
+        <img id="board" class="board" alt="Chess position">
+        <div id="squares" class="squares"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="btn-first" title="First position (Home)">&#124;&#9664;</button>
+      <button id="btn-prev" title="Previous (Left arrow)">&#9664;</button>
+      <button id="btn-next" class="primary wide" title="Next (Space / Right arrow)">
+        Next &#9654;
+      </button>
+      <button id="btn-last" title="Last (End)">&#9654;&#124;</button>
+      <button id="btn-flip" title="Flip board (F)">&#8645;</button>
+      <button id="btn-play" title="Autoplay (P)">&#9654;&#9654;</button>
+    </div>
+
+    <div class="meta">
+      <div id="move-label" class="move-label">Starting position</div>
+      <div id="line-label" class="dim small">Main line</div>
+      <div id="engine-line" class="dim small engine-line"></div>
+      <div id="comment" class="comment"></div>
+    </div>
+
+    <div class="graph-wrap">
+      <svg id="evalgraph" class="evalgraph" preserveAspectRatio="none"></svg>
+      <p class="dim small" id="graph-note">Evaluation graph</p>
+    </div>
+  </section>
+
+  <section class="movepanel">
+    <div class="panel-head row">
+      <h2 id="chapter-name">Chapter</h2>
+      <span id="analyse-state" class="dim small"></span>
+    </div>
+    <div id="moves" class="moves"></div>
+  </section>
+
+</main>
+
+<div id="preview" class="preview hidden"><img id="preview-img" alt=""></div>
+
+<div id="export-dialog" class="dialog hidden">
+  <div class="dialog-card">
+    <h2>Export to PDF</h2>
+
+    <label class="field">
+      <span>Style</span>
+      <select id="opt-mode">
+        <option value="grid" selected>Grid &mdash; twelve small boards per page</option>
+        <option value="book">Chess book &mdash; typeset with LaTeX, like chesspaper</option>
+        <option value="slideshow">Slideshow &mdash; one big board per page, steps with the arrow keys</option>
+        <option value="acrobat">Layered &mdash; ADOBE ACROBAT READER ONLY, blank elsewhere</option>
+      </select>
+    </label>
+    <p id="mode-note" class="note"></p>
+
+    <div id="opts-paged">
+      <label class="field">
+        <span>Diagrams inside the notation section</span>
+        <select id="opt-diagrams">
+          <option value="auto" selected>Automatic &mdash; none in Grid, every 6 moves otherwise</option>
+          <option value="every:6">Every 6 moves</option>
+          <option value="every:4">Every 4 moves</option>
+          <option value="every:3">Every 3 moves</option>
+          <option value="comments">At every commented move</option>
+          <option value="all">At every move</option>
+          <option value="none">None</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Chapters</span>
+      <select id="opt-chapters">
+        <option value="all">All chapters</option>
+        <option value="current">Current chapter only</option>
+      </select>
+    </label>
+
+    <div class="checks">
+      <label id="chk-notation"><input type="checkbox" id="opt-notation" checked> Full notation section</label>
+      <label id="chk-steps"><input type="checkbox" id="opt-steps" checked> Stepping pages</label>
+      <label><input type="checkbox" id="opt-evals"> Evaluation bars</label>
+      <label id="chk-landscape"><input type="checkbox" id="opt-landscape" checked> Landscape pages</label>
+    </div>
+    <p id="eval-note" class="note"></p>
+
+    <div class="dialog-actions">
+      <button id="export-cancel" class="ghost">Cancel</button>
+      <button id="export-go" class="primary">Build PDF</button>
+    </div>
+    <p id="export-status" class="note"></p>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
