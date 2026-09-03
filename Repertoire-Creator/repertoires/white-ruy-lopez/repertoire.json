@@ -1,0 +1,32 @@
+{
+  "slug": "white-ruy-lopez",
+  "name": "White Ruy Lopez",
+  "color": "white",
+  "description": "",
+  "created": "2026-09-03T11:12:49+00:00",
+  "updated": "2026-09-03T12:23:36+00:00",
+  "lichess": {
+    "studyId": null,
+    "visibility": "unlisted"
+  },
+  "chapters": [
+    {
+      "id": "4a5f0d9fca",
+      "file": "0001-main-line.pgn",
+      "name": "Main line",
+      "orientation": "white",
+      "lichessChapterId": null,
+      "pushedHash": null,
+      "pushedAt": null
+    },
+    {
+      "id": "182190508c",
+      "file": "0002-2nf6.pgn",
+      "name": "2Nf6",
+      "orientation": "white",
+      "lichessChapterId": null,
+      "pushedHash": null,
+      "pushedAt": null
+    }
+  ]
+}

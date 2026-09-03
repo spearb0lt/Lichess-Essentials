@@ -1,0 +1,9 @@
+{
+  "git": {
+    "enabled": false,
+    "push": false,
+    "remote": "origin",
+    "branch": "main",
+    "debounceSeconds": 20.0
+  }
+}
