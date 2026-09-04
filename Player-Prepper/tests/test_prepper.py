@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -691,3 +692,51 @@ def test_the_click_overlay_is_inset_by_the_real_svg_margin():
     fraction = margin_fraction(True)
     assert 0 < fraction < 0.1
     assert margin_fraction(False) == 0
+
+
+# ------------------------------------------------------------------- the css
+#
+# The export dialog shipped with its three checkboxes stretched to the full
+# width of the dialog, each one shouldering its own label out through the
+# right-hand edge, because `.dialog input` and `.check input` have identical
+# specificity and the one written later silently won. Weakness-Report carries
+# the same assertion against the same stylesheet.
+
+
+WEB = Path(__file__).resolve().parent.parent / "player_prepper" / "web"
+
+#: ``width: 100%`` but not ``max-width``/``min-width``, which are harmless on
+#: a tickbox -- one caps it at a size it will never reach, the other at zero.
+FULL_WIDTH = re.compile(r"(?<!-)\bwidth:\s*100%")
+
+
+def _selectors_setting_full_width(css):
+    """Every individual selector in a block that sets ``width: 100%``."""
+    out = []
+    for block in css.split("}"):
+        if "{" not in block or not FULL_WIDTH.search(block.split("{", 1)[1]):
+            continue
+        out += [part.strip() for part in block.split("{")[0].split(",")
+                if part.strip()]
+    return out
+
+
+def test_no_rule_stretches_a_checkbox_across_its_container():
+    """Asked as "does any selector reach a bare ``input``", so that it keeps
+    holding for rules nobody has written yet rather than only for this one."""
+    css = (WEB / "style.css").read_text(encoding="utf-8")
+    offenders = [part for part in _selectors_setting_full_width(css)
+                 if part.endswith("input") and ":not(" not in part]
+    assert not offenders, f"these would stretch a checkbox: {offenders}"
+    assert 'input[type="checkbox"], input[type="radio"]' in css, (
+        "the belt-and-braces reset that pins a tickbox to its own size is gone")
+
+
+def test_every_dialog_checkbox_still_has_a_label_beside_it():
+    """A .check row is a box and a span. The span is what got pushed out."""
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    rows = re.findall(r'<label class="check">(.*?)</label>', html, re.S)
+    assert len(rows) >= 3
+    for row in rows:
+        assert 'type="checkbox"' in row
+        assert row.split("<span>")[1].split("</span>")[0].strip()

@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "weakness-report"
+version = "0.1.0"
+description = "Review your whole game history and find out what you are actually bad at."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "chess>=1.11",
+    "requests>=2.31",
+    "reportlab>=4.0",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+# The review itself -- accuracy, move labels, the engine pool -- comes from
+# ChessAnalyzer rather than a second copy of it. In a normal checkout it is
+# found in the sibling folder with no install at all; this is for the case
+# where the folders are not next to each other.
+#   pip install -e ChessAnalyzer
+review = ["chess-analyzer"]
+# Board diagrams in the PDF, and the font handling that lets it draw them.
+#   pip install -e Lichess-Study-to-PDF
+diagrams = ["lichess-study-to-pdf"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+weakness = "weakness_report.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["weakness_report*"]
+
+[tool.setuptools.package-data]
+weakness_report = ["web/*"]

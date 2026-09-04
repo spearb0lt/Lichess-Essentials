@@ -1,0 +1,6 @@
+chess>=1.11
+requests>=2.31
+reportlab>=4.0
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.0

@@ -436,7 +436,7 @@ part that produces the numbers testable with no network, no engine and no disk.
 ## Tests
 
 ```bash
-../.lichess/Scripts/python.exe -m pytest tests -q          # 50 tests
+../.lichess/Scripts/python.exe -m pytest tests -q          # 52 tests
 ```
 
 No network, no engine, no Stockfish. The bias is towards things that break
@@ -457,6 +457,15 @@ A third came out of a test failing honestly: the coverage walk originally only
 checked positions it was about to play a move from, so a game that *ended* on
 your turn — someone resigned — was silently counted as covered rather than
 checked. Every position reached inside the horizon is now checked.
+
+A fourth is the one stylesheet assertion. `.dialog input` and `.check input`
+have identical specificity, so whichever is written last wins; the later one
+set `width: 100%`, which turned every checkbox in the export dialog into a
+full-width slab that shouldered its own label out through the right-hand edge.
+Nothing in Python could see it and the stylesheet reads correctly. The rule now
+says `:not([type="checkbox"])` outright, and the test asks the general question
+— does any selector setting `width: 100%` still reach a bare `input` — rather
+than checking that today's `:not()` is still spelled right.
 
 The exploit ranking is tested the same way — on hand-built rows where the
 product of the factors can be worked out by hand — because "which line is the

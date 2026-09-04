@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weakness Report</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%99%9C%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">&#9820;</span>
+    <span>Weakness <span class="dim">Report</span></span>
+  </div>
+
+  <form id="run-form" class="hunt">
+    <select id="source" title="Where the games come from" aria-label="Source">
+      <option value="lichess">Lichess</option>
+      <option value="chesscom">Chess.com</option>
+      <option value="pgn">A PGN file</option>
+      <option value="analyzer">ChessAnalyzer library</option>
+    </select>
+    <input id="username" type="text" placeholder="your username"
+           autocomplete="off" autocapitalize="none" spellcheck="false"
+           aria-label="Your username">
+    <input id="path" type="text" class="hidden" placeholder="path to a .pgn file or folder"
+           autocapitalize="none" spellcheck="false" aria-label="PGN path">
+    <button type="submit" id="btn-run" class="primary">Review</button>
+  </form>
+
+  <div class="topbar-right">
+    <button type="button" id="engine-pill" class="pill" title="Where the review rules come from">checking</button>
+    <button type="button" id="btn-token" class="ghost">Token</button>
+    <button type="button" id="btn-csv" class="ghost" disabled>CSV</button>
+    <button type="button" id="btn-pdf" class="ghost" disabled>PDF</button>
+  </div>
+</header>
+
+<div id="status" class="status hidden"></div>
+
+<div id="job" class="job hidden">
+  <div class="job-bar"><span id="job-fill"></span></div>
+  <div class="job-text">
+    <span id="job-message">Working...</span>
+    <button type="button" id="job-cancel" class="small-btn ghost">Stop</button>
+  </div>
+</div>
+
+<main id="app" class="app">
+
+  <!-- ------------------------------------------------------- left panel -->
+  <aside class="panel side-left">
+    <div class="panel-head">
+      <h2>Histories</h2>
+      <p class="dim small" id="reports-note">Nothing reviewed yet.</p>
+    </div>
+    <ul id="report-list" class="report-list"></ul>
+
+    <details id="settings-box" class="settings">
+      <summary><h3>Settings</h3></summary>
+      <div class="settings-body">
+        <label class="field">
+          <span>Games to review</span>
+          <input id="opt-limit" type="number" inputmode="numeric" min="10" max="1000" step="10" value="200">
+        </label>
+        <label class="field">
+          <span>Search depth</span>
+          <select id="opt-preset"></select>
+        </label>
+        <p class="dim small" id="preset-note"></p>
+        <label class="field">
+          <span>Engine threads</span>
+          <input id="opt-threads" type="number" inputmode="numeric" min="1" max="16" value="1">
+        </label>
+        <p class="dim small">
+          One thread keeps the report reproducible: Stockfish splits its search
+          across threads and they do not always finish in the same order.
+        </p>
+        <label class="field">
+          <span>Only the last N days</span>
+          <input id="opt-days" type="number" inputmode="numeric" min="0" max="3650" placeholder="all">
+        </label>
+        <label class="field">
+          <span>Existing reviews</span>
+          <select id="opt-adopt">
+            <option value="matching">Reuse only those searched the same way</option>
+            <option value="any">Reuse any, even at other settings</option>
+            <option value="none">Ignore, review everything here</option>
+          </select>
+        </label>
+        <div class="speeds" id="opt-speeds"></div>
+        <label class="check">
+          <input id="opt-rated" type="checkbox" checked>
+          <span>Rated games only</span>
+        </label>
+        <label class="check">
+          <input id="opt-refresh" type="checkbox">
+          <span>Re-fetch the game list</span>
+        </label>
+        <label class="check">
+          <input id="opt-noreview" type="checkbox">
+          <span>Aggregate what is reviewed, review nothing new</span>
+        </label>
+        <p class="dim small" id="estimate-note"></p>
+      </div>
+    </details>
+  </aside>
+
+  <!-- ---------------------------------------------------------- report -->
+  <section class="panel centre">
+    <div id="empty" class="empty">
+      <h3>Review your history</h3>
+      <p class="dim">
+        A single game review tells you what went wrong in that game. Four
+        hundred of them, sliced by the kind of position you were in, tell you
+        what keeps going wrong &mdash; which is the thing you can actually do
+        something about.
+      </p>
+      <p class="dim small">
+        Pick a source above and press Review. Reviews are kept per game, so
+        adding games later only costs the new ones.
+      </p>
+    </div>
+
+    <div id="report" class="hidden">
+      <div class="report-head">
+        <div class="report-title">
+          <h2 id="rep-name">-</h2>
+          <p class="dim small" id="rep-meta"></p>
+        </div>
+      </div>
+
+      <div id="summary" class="coverage"></div>
+      <div id="caveats"></div>
+
+      <nav class="tabs" id="tabs">
+        <button type="button" class="tab active" data-tab="findings">Findings</button>
+        <button type="button" class="tab" data-tab="slices">Every slice</button>
+        <button type="button" class="tab" data-tab="moments">Worst moves</button>
+        <button type="button" class="tab" data-tab="method">Method</button>
+      </nav>
+
+      <div id="tab-findings" class="tabpanel">
+        <div class="floor">
+          <label class="field inline">
+            <span>Least moves</span>
+            <input id="opt-minmoves" type="number" inputmode="numeric" min="1" max="2000" step="10" value="40">
+          </label>
+          <label class="field inline">
+            <span>Least games</span>
+            <input id="opt-mingames" type="number" inputmode="numeric" min="1" max="200" value="5">
+          </label>
+          <button type="button" id="btn-reslice" class="small-btn ghost">Apply</button>
+          <span class="dim small">Re-slices what is on disk. No engine, instant.</span>
+        </div>
+        <div id="findings-body"></div>
+      </div>
+
+      <div id="tab-slices" class="tabpanel hidden">
+        <div id="slice-picker" class="factors"></div>
+        <div id="slices-body"></div>
+      </div>
+
+      <div id="tab-moments" class="tabpanel hidden"></div>
+      <div id="tab-method" class="tabpanel hidden"></div>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------- right panel -->
+  <aside class="panel side-right">
+    <div id="detail-empty" class="dim small pad">
+      Click a worst move to see the position here.
+    </div>
+    <div id="detail" class="hidden">
+      <img id="detail-board" alt="the position">
+      <div class="board-tools">
+        <button type="button" id="btn-flip" class="small-btn ghost">Flip</button>
+        <a id="detail-lichess" class="small-btn ghost" target="_blank" rel="noopener">Lichess</a>
+        <a id="detail-game" class="small-btn ghost" target="_blank" rel="noopener">The game</a>
+      </div>
+      <h3 id="detail-move">-</h3>
+      <p class="dim small" id="detail-context"></p>
+      <div id="detail-stats" class="stats"></div>
+    </div>
+  </aside>
+</main>
+
+<!-- ------------------------------------------------------------- dialogs -->
+
+<dialog id="dlg-token">
+  <form method="dialog" class="dialog">
+    <h3>Lichess token</h3>
+    <p class="dim small">
+      Optional. Every endpoint this app uses is public; a token only raises the
+      Lichess rate limit while pulling a few hundred games. Kept in memory for
+      this session and never written to disk.
+    </p>
+    <input id="token-input" type="password" placeholder="lip_..." autocapitalize="none">
+    <p class="dim small" id="token-status"></p>
+    <menu>
+      <button value="close" class="ghost">Cancel</button>
+      <button type="button" id="token-ok" class="primary">Save for this session</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-pdf">
+  <form method="dialog" class="dialog">
+    <h3>Export the report</h3>
+    <p class="dim small">
+      A document, not a dump: what was measured, the findings in order, every
+      slice as a table, the worst moves as diagrams, and the method.
+    </p>
+    <label class="check">
+      <input id="pdf-moments" type="checkbox" checked>
+      <span>Board diagrams of the worst moves</span>
+    </label>
+    <label class="check">
+      <input id="pdf-method" type="checkbox" checked>
+      <span>The method and glossary pages</span>
+    </label>
+    <label class="check">
+      <input id="pdf-landscape" type="checkbox">
+      <span>Landscape pages</span>
+    </label>
+    <p class="dim small" id="pdf-status"></p>
+    <menu>
+      <button value="close" class="ghost">Cancel</button>
+      <button type="button" id="pdf-go" class="primary">Build PDF</button>
+    </menu>
+  </form>
+</dialog>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

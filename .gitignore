@@ -33,6 +33,11 @@ ChessAnalyzer/tests/edge-profile/
 Player-Prepper/prep/
 Player-Prepper/data/
 
+# Weakness Report: your games, one engine review per game, and a page of
+# numbers about how you play. All regenerable, all rather personal, and the
+# reviews alone run to megabytes.
+Weakness-Report/history/
+
 # Never commit a Lichess API token
 .lichess_token
 .env

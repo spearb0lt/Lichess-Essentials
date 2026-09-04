@@ -1,4 +1,7 @@
-/* Same palette as the three sibling apps, so the four feel like one toolkit. */
+/* Same palette as the sibling apps, so the whole repository feels like
+   one toolkit. The responsive rules are the ones Player-Prepper arrived at:
+   one column below 860px with the report first, a scrolling tab bar, and a
+   board that is never allowed to fill a tablet. */
 :root {
   --bg: #f4f1ea;
   --panel: #ffffff;
@@ -182,21 +185,21 @@ input[type="checkbox"], input[type="radio"] {
   .board-tools { gap: 4px; }
 }
 
-/* ------------------------------------------------------------ scout list */
+/* ----------------------------------------------------------- report list */
 
-.scout-list { list-style: none; margin: 10px 0 0; padding: 0; }
-.scout-list li {
+.report-list { list-style: none; margin: 10px 0 0; padding: 0; }
+.report-list li {
   padding: 8px 9px; border-radius: 6px; cursor: pointer;
   display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
 }
-.scout-list li:hover { background: #faf8f4; }
-.scout-list li.active { background: var(--hilite); }
-.scout-list .who { font-weight: 600; }
-.scout-list .drop {
+.report-list li:hover { background: #faf8f4; }
+.report-list li.active { background: var(--hilite); }
+.report-list .who { font-weight: 600; }
+.report-list .drop {
   border: 0; background: transparent; color: var(--faint); padding: 0 6px;
   font-size: 16px; line-height: 1; flex: none;
 }
-.scout-list .drop:hover { color: var(--danger); }
+.report-list .drop:hover { color: var(--danger); }
 
 /* -------------------------------------------------------------- settings */
 
@@ -328,55 +331,55 @@ input[type="checkbox"], input[type="radio"] {
 
 /* ------------------------------------------------------------ the board */
 
-.board-wrap { display: flex; gap: 8px; align-items: stretch; }
+#detail-board { width: 100%; height: auto; display: block; border-radius: 6px; }
+.board-tools { display: flex; gap: 5px; margin: 8px 0 12px; flex-wrap: wrap; }
 
-.evalbar {
-  position: relative; width: 16px; flex: none; border-radius: 4px;
-  background: #2a2724; overflow: hidden; border: 1px solid var(--rule);
-}
-.evalbar span {
-  position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
-  background: #f2efe8; transition: height .25s ease;
-}
-.evalchip {
-  font: 12px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace;
-  font-weight: 650; background: var(--hilite); color: var(--accent-dark);
-  min-width: 58px; text-align: center;
-}
-.evalchip:empty { display: none; }
+/* ------------------------------------------------------- findings and floor */
 
-.board-holder { position: relative; flex: 1 1 auto; min-width: 0; }
-.board-holder img { width: 100%; height: auto; display: block; border-radius: 6px; }
+.floor {
+  display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap;
+  padding: 10px; background: #faf8f4; border: 1px solid var(--rule);
+  border-radius: var(--radius); margin-bottom: 12px;
+}
+.field.inline { margin: 0; }
+.field.inline input { width: 92px; }
 
-.squares {
-  position: absolute; display: grid;
-  grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr);
+.finding {
+  padding: 10px 12px; border: 1px solid var(--rule); border-radius: var(--radius);
+  background: #fdfcfa; margin-bottom: 8px;
 }
-.squares div { cursor: pointer; position: relative; }
-.squares div.dest::after {
-  content: ""; position: absolute; inset: 34%; border-radius: 50%;
-  background: rgba(20, 80, 30, .38);
-}
-.squares div.dest.occupied::after {
-  inset: 6%; border-radius: 50%; background: transparent;
-  border: 4px solid rgba(20, 80, 30, .34);
-}
-.squares div.pick { background: rgba(205, 210, 106, .55); }
+.finding.good { border-left: 3px solid var(--good); }
+.finding.bad { border-left: 3px solid var(--bad); }
+.finding .claim { font-weight: 600; display: flex; justify-content: space-between; gap: 10px; }
+.finding .claim em { font-style: normal; white-space: nowrap; }
+.finding .why { color: var(--muted); font-size: 12px; margin-top: 3px; }
 
-.board-tools { display: flex; gap: 5px; margin: 8px 0; flex-wrap: wrap; align-items: center; }
+.slice-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.slice-table th {
+  text-align: left; font-weight: 600; color: var(--muted); font-size: 10px;
+  text-transform: uppercase; letter-spacing: .04em; padding: 4px 6px;
+  border-bottom: 1px solid var(--rule);
+}
+.slice-table td { padding: 5px 6px; border-bottom: 1px solid #f2efe9; }
+.slice-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.slice-table .delta { font-weight: 600; }
+.slice-block { margin-bottom: 20px; }
+.slice-block h4 { margin: 0 0 2px; font-size: 13px; }
 
-.move-strip {
-  font: 12px/1.7 ui-monospace, "Cascadia Mono", Consolas, monospace;
-  margin-bottom: 8px; overflow-wrap: anywhere;
+.moments { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.moment {
+  border: 1px solid var(--rule); border-radius: var(--radius); padding: 8px;
+  cursor: pointer; background: #fdfcfa;
 }
-.move-strip button {
-  border: 0; background: transparent; padding: 1px 4px; border-radius: 4px;
-  font: inherit; color: var(--ink);
+.moment:hover { border-color: var(--faint); }
+.moment.active { border-color: var(--accent); background: var(--hilite); }
+.moment img { width: 100%; height: auto; display: block; border-radius: 4px; }
+.moment .head {
+  display: flex; justify-content: space-between; gap: 6px; margin-top: 6px;
+  font-size: 12px; font-weight: 600;
 }
-.move-strip button:hover { background: #f1efe9; }
-.move-strip button.here { background: var(--accent); color: #fff; }
-.move-strip button.played { color: var(--variation); }
-.move-strip .num { color: var(--faint); }
+.moment .head .cost { color: var(--bad); }
+.moment .sub { font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
 
 /* ---------------------------------------------------------------- detail */
 
