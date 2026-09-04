@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Player Prepper</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%E2%99%9F%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">&#9823;</span>
+    <span>Player <span class="dim">Prepper</span></span>
+  </div>
+
+  <form id="scout-form" class="hunt">
+    <select id="site" title="Which site to scout on" aria-label="Site">
+      <option value="lichess">Lichess</option>
+      <option value="chesscom">Chess.com</option>
+    </select>
+    <input id="username" type="text" placeholder="their username"
+           autocomplete="off" autocapitalize="none" spellcheck="false"
+           aria-label="Their username">
+    <button type="submit" id="btn-scout" class="primary">Scout</button>
+  </form>
+
+  <div class="topbar-right">
+    <button type="button" id="book-pill" class="pill book"
+            title="What your coverage is measured against">no book</button>
+    <button type="button" id="engine-pill" class="pill engine off"
+            title="When on, every position you look at gets the engine's lines automatically">engine off</button>
+    <button type="button" id="btn-token" class="ghost">Token</button>
+    <button type="button" id="btn-pgn" class="ghost" disabled>PGN</button>
+    <button type="button" id="btn-pdf" class="ghost" disabled>PDF</button>
+  </div>
+</header>
+
+<div id="status" class="status hidden"></div>
+
+<div id="job" class="job hidden">
+  <div class="job-bar"><span id="job-fill"></span></div>
+  <div class="job-text">
+    <span id="job-message">Working...</span>
+    <button type="button" id="job-cancel" class="small-btn ghost">Stop</button>
+  </div>
+</div>
+
+<main id="app" class="app">
+
+  <!-- ------------------------------------------------------- left panel -->
+  <aside class="panel side-left">
+    <div class="panel-head">
+      <h2>Scouted</h2>
+      <p class="dim small" id="scouts-note">Nobody yet.</p>
+    </div>
+    <ul id="scout-list" class="scout-list"></ul>
+
+    <details id="settings-box" class="settings">
+      <summary><h3>Settings</h3></summary>
+      <div class="settings-body">
+        <label class="field">
+          <span>Games to pull</span>
+          <input id="opt-limit" type="number" inputmode="numeric" min="10" max="2000" step="10" value="300">
+        </label>
+        <label class="field">
+          <span>Scout depth (plies)</span>
+          <input id="opt-maxply" type="number" inputmode="numeric" min="6" max="60" step="2" value="24">
+        </label>
+        <label class="field">
+          <span>Smallest sample</span>
+          <input id="opt-mingames" type="number" inputmode="numeric" min="1" max="50" value="5">
+        </label>
+        <label class="field">
+          <span>Only the last N days</span>
+          <input id="opt-days" type="number" inputmode="numeric" min="0" max="3650" placeholder="all">
+        </label>
+        <label class="field">
+          <span>Engine hints for top N gaps</span>
+          <input id="opt-suggest" type="number" inputmode="numeric" min="0" max="24" value="8">
+        </label>
+        <div class="speeds" id="opt-speeds"></div>
+        <label class="check">
+          <input id="opt-rated" type="checkbox" checked>
+          <span>Rated games only</span>
+        </label>
+        <label class="check">
+          <input id="opt-refresh" type="checkbox">
+          <span>Re-fetch, ignore the cache</span>
+        </label>
+      </div>
+    </details>
+  </aside>
+
+  <!-- ---------------------------------------------------------- report -->
+  <section class="panel centre">
+    <div id="empty" class="empty">
+      <h3>Scout somebody</h3>
+      <p class="dim">
+        Type their username above and press Scout. Their games are pulled from
+        Lichess or Chess.com, folded into an opening tree, and measured against
+        whatever you set as your book.
+      </p>
+      <p class="dim small">
+        No token is needed. Nothing here writes to your repertoires.
+      </p>
+    </div>
+
+    <div id="report" class="hidden">
+      <div class="report-head">
+        <div class="report-title">
+          <h2 id="rep-name">-</h2>
+          <p class="dim small" id="rep-meta"></p>
+        </div>
+        <div class="colour-switch">
+          <button type="button" class="seg active" data-colour="white">They play White</button>
+          <button type="button" class="seg" data-colour="black">They play Black</button>
+        </div>
+      </div>
+
+      <div id="coverage" class="coverage"></div>
+
+      <nav class="tabs" id="tabs">
+        <button type="button" class="tab active" data-tab="gaps">Gaps <span id="count-gaps" class="count"></span></button>
+        <button type="button" class="tab" data-tab="exploit">Exploit <span id="count-exploit" class="count"></span></button>
+        <button type="button" class="tab" data-tab="openings">Their openings</button>
+        <button type="button" class="tab" data-tab="weak">Where they leak <span id="count-weak" class="count"></span></button>
+        <button type="button" class="tab" data-tab="moves">Every choice</button>
+        <button type="button" class="tab" data-tab="explore">Explore</button>
+      </nav>
+
+      <div id="tab-gaps" class="tabpanel"></div>
+
+      <div id="tab-exploit" class="tabpanel hidden">
+        <p class="dim small">
+          Their real choices, crossed with what the engine says you get against
+          each. Turn a factor off to stop it counting towards the ranking.
+        </p>
+        <div id="exploit-factors" class="factors"></div>
+        <div id="exploit-head"></div>
+        <div id="exploit-body"></div>
+      </div>
+
+      <div id="tab-openings" class="tabpanel hidden"></div>
+      <div id="tab-weak" class="tabpanel hidden"></div>
+      <div id="tab-moves" class="tabpanel hidden"></div>
+      <div id="tab-explore" class="tabpanel hidden">
+        <div id="explore-crumbs" class="crumbs"></div>
+        <div id="explore-body"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------- right panel -->
+  <aside class="panel side-right">
+    <div id="detail-empty" class="dim small pad">
+      Click any line to see the position here. You can play on from it, and the
+      mouse wheel over the board steps through the moves.
+    </div>
+
+    <div id="detail" class="hidden">
+      <div class="board-wrap">
+        <div class="evalbar" id="evalbar" title="Evaluation bar. The light block is White's share.">
+          <span id="evalfill"></span>
+        </div>
+        <div class="board-holder" id="board-holder">
+          <img id="detail-board" alt="the position">
+          <div id="squares" class="squares"></div>
+        </div>
+      </div>
+
+      <div class="board-tools">
+        <span id="evaltext" class="chip evalchip" title="Evaluation of this position"></span>
+        <button type="button" id="btn-first" class="small-btn ghost" title="Start of the line">&#9198;</button>
+        <button type="button" id="btn-back" class="small-btn ghost" title="Back (wheel up)">&#9664;</button>
+        <button type="button" id="btn-forward" class="small-btn ghost" title="Forward (wheel down)">&#9654;</button>
+        <button type="button" id="btn-last" class="small-btn ghost" title="End of the line">&#9197;</button>
+        <button type="button" id="btn-flip" class="small-btn ghost" title="Flip the board (F)">Flip</button>
+        <button type="button" id="btn-reset" class="small-btn ghost hidden" title="Throw away the moves you played">Reset</button>
+        <a id="detail-lichess" class="small-btn ghost" target="_blank" rel="noopener">Lichess</a>
+      </div>
+
+      <div id="move-strip" class="move-strip"></div>
+
+      <h3 id="detail-line">-</h3>
+      <p class="dim small" id="detail-opening"></p>
+      <div id="detail-stats" class="stats"></div>
+      <div id="detail-engine" class="engine"></div>
+      <button type="button" id="btn-suggest" class="block ghost">Ask the engine</button>
+      <div id="detail-samples" class="samples"></div>
+    </div>
+  </aside>
+</main>
+
+<!-- ------------------------------------------------------------- dialogs -->
+
+<dialog id="dlg-book">
+  <form method="dialog" class="dialog">
+    <h3>Your book</h3>
+    <p class="dim small">
+      Coverage is measured against this. Add as many sources as you like -- they
+      are folded into one book keyed by position, so move orders that transpose
+      are counted once.
+    </p>
+
+    <div id="book-sources" class="book-sources"></div>
+
+    <div class="book-add">
+      <select id="book-kind" aria-label="Kind of source">
+        <option value="repertoire">A Repertoire-Creator repertoire</option>
+        <option value="study">A Lichess study</option>
+        <option value="games">Your own games</option>
+      </select>
+
+      <div id="add-repertoire" class="add-row">
+        <select id="book-slug" aria-label="Repertoire"></select>
+      </div>
+
+      <div id="add-study" class="add-row hidden">
+        <input id="book-url" type="url" inputmode="url" autocapitalize="none"
+               placeholder="https://lichess.org/study/..." aria-label="Study URL">
+        <select id="book-color" title="Which side the study is for" aria-label="Colour">
+          <option value="auto">Colour: from the chapter tag</option>
+          <option value="white">Colour: White</option>
+          <option value="black">Colour: Black</option>
+          <option value="both">Colour: both sides</option>
+        </select>
+      </div>
+
+      <div id="add-games" class="add-row hidden">
+        <select id="book-site" aria-label="Site">
+          <option value="lichess">Lichess</option>
+          <option value="chesscom">Chess.com</option>
+        </select>
+        <input id="book-user" type="text" autocapitalize="none"
+               placeholder="your username" aria-label="Your username">
+        <input id="book-limit" type="number" inputmode="numeric" min="20" max="2000"
+               step="20" value="200" title="how many of your games to read"
+               aria-label="How many of your games">
+      </div>
+
+      <button type="button" id="book-add" class="ghost">Add</button>
+    </div>
+
+    <p id="book-report" class="dim small"></p>
+
+    <menu>
+      <button type="button" id="book-check" class="ghost">Check it</button>
+      <button value="close" class="primary">Done</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-token">
+  <form method="dialog" class="dialog">
+    <h3>Lichess token</h3>
+    <p class="dim small">
+      Optional. Nothing here needs one: every endpoint this app uses is public.
+      A token raises the Lichess rate limit when pulling hundreds of games, and
+      lets a private study be read as your book. It is kept in memory for this
+      session only and never written to disk.
+    </p>
+    <input id="token-input" type="password" placeholder="lip_..." autocapitalize="none">
+    <p class="dim small" id="token-status"></p>
+    <menu>
+      <button value="close" class="ghost">Cancel</button>
+      <button type="button" id="token-ok" class="primary">Save for this session</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="dlg-pdf">
+  <form method="dialog" class="dialog">
+    <h3>Export the prep sheet</h3>
+    <label class="field">
+      <span>Style</span>
+      <select id="pdf-mode"></select>
+    </label>
+    <p class="dim small" id="pdf-note"></p>
+    <label class="check">
+      <input id="pdf-notation" type="checkbox" checked>
+      <span>Include the read-through notation section</span>
+    </label>
+    <label class="check">
+      <input id="pdf-steps" type="checkbox" checked>
+      <span>Board diagrams &mdash; off leaves a text-only document</span>
+    </label>
+    <label class="check">
+      <input id="pdf-landscape" type="checkbox" checked>
+      <span>Landscape pages</span>
+    </label>
+    <p class="dim small" id="pdf-status"></p>
+    <menu>
+      <button value="close" class="ghost">Cancel</button>
+      <button type="button" id="pdf-go" class="primary">Build PDF</button>
+    </menu>
+  </form>
+</dialog>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "player-prepper"
+version = "0.1.0"
+description = "Scout a chess opponent from their own games, and measure your preparation against them."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "chess>=1.11",
+    "requests>=2.31",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+# Engine suggestions for gaps, PDF export, and reading a private study as your
+# book all come from the sibling app rather than a second copy of its code.
+# Install it editable from the repository root:
+#   pip install -e Lichess-Study-to-PDF
+prep = ["lichess-study-to-pdf"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+prepper = "player_prepper.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["player_prepper*"]
+
+[tool.setuptools.package-data]
+player_prepper = ["web/*"]

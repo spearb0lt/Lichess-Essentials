@@ -27,6 +27,12 @@ ChessAnalyzer/engines/*
 # artifact, never source.
 ChessAnalyzer/tests/edge-profile/
 
+# Player Prepper: cached opponent games, saved reports and the openings index
+# are all regenerated on demand -- and a scouting report of somebody's recent
+# games is not something to commit to a public repository in any case.
+Player-Prepper/prep/
+Player-Prepper/data/
+
 # Never commit a Lichess API token
 .lichess_token
 .env
