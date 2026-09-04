@@ -15,10 +15,13 @@ but it will not decide on your behalf to write your credentials down.
 
 from __future__ import annotations
 
+import base64
+import hmac
+import os
 import threading
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -58,6 +61,38 @@ from .storage import (
 WEB_DIR = Path(__file__).resolve().parent / "web"
 
 app = FastAPI(title="Repertoire Creator")
+
+#: A shared password gate for hosted deployments. Unset by default, so local
+#: use (``repertoire serve``) is never asked for credentials -- this only
+#: activates when both env vars are set, which a public deployment should do.
+_AUTH_USER = os.environ.get("REPERTOIRE_AUTH_USER")
+_AUTH_PASS = os.environ.get("REPERTOIRE_AUTH_PASS")
+
+
+@app.middleware("http")
+async def _require_password(request: Request, call_next):
+    if not _AUTH_USER or not _AUTH_PASS:
+        return await call_next(request)
+
+    header = request.headers.get("authorization", "")
+    if header.startswith("Basic "):
+        try:
+            decoded = base64.b64decode(header[6:]).decode("utf-8")
+            user, _, password = decoded.partition(":")
+        except (ValueError, UnicodeDecodeError):
+            user, password = "", ""
+        # compare_digest against both fields so a wrong username does not
+        # short-circuit before the password comparison (timing side channel).
+        if hmac.compare_digest(user, _AUTH_USER) and hmac.compare_digest(
+            password, _AUTH_PASS
+        ):
+            return await call_next(request)
+
+    return Response(
+        status_code=401,
+        headers={"WWW-Authenticate": 'Basic realm="Repertoire Creator"'},
+    )
+
 
 #: Set by the CLI before uvicorn starts; the default keeps direct
 #: ``uvicorn repertoire_creator.server:app`` working.

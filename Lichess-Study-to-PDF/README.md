@@ -7,6 +7,8 @@ Everything in the study makes it into the export: main line, sidelines nested
 to any depth, comments, NAG symbols (`!`, `?!`, `□`), and the coloured square
 markers and arrows Lichess stores in the PGN.
 
+![The Fried Liver Attack study open in the browser: the chapter list on the left, the board with a live eval bar, the notation panel with comments and sideline colours, and the eval graph underneath](docs/study.png)
+
 ---
 
 ## Running the app
@@ -86,15 +88,21 @@ LaTeX means the book mode is greyed out. Neither stops the app running.
    For a **private** study, paste a *chapter* URL
    (`https://lichess.org/study/i7hMEq7h/0KOpBPyc`) — every other chapter is
    found automatically, no token needed. See the next section.
-3. Click chapters on the left; step through with **Space** or the arrow keys.
+3. Click chapters on the left; step through with **Space**, the arrow keys, or
+   by **scrolling the mouse wheel over the board** — down goes forward, up goes
+   back, and either one stops the autoplay.
    Click any move — including inside a sideline — to jump there.
    Pick up a piece to play your own moves from that position.
 4. **Export PDF** on the bottom left, choose a style, **Build PDF**.
+
+![The Export to PDF dialog: a style picker, the diagram policy, a chapter subset, and tick boxes for the notation section, stepping pages, evaluation bars and landscape pages](docs/export.png)
 
 Handy: `http://127.0.0.1:8777/?url=<study-url>` loads a study straight away,
 so you can bookmark a study you open often.
 
 ### Your studies list
+
+![The home page: My studies, one card per study, grouped under the section headings from studies.txt](docs/home.png)
 
 The home page is built from **`studies.txt`**, in this folder. One study per
 line:
@@ -236,12 +244,16 @@ keeps nesting and identity readable in a greyscale print or for a colour-blind
 reader. Grid pages carry a legend of the sidelines shown on them along the
 footer.
 
+![A grid page carrying two sidelines, s2 in green and s4 in magenta: each is a bar down the left edge of its boards, a wash behind them and the ink of their moves, its number printed in every cell, and both named in the legend along the footer](docs/pdf-grid-sidelines.png)
+
 ### `--mode grid` (default) — twelve boards to a page
 
 A contact sheet: every position gets its own diagram, twelve to a page, in
 reading order, each with its move, evaluation and comment underneath. Same
 coverage as the slideshow with a twelfth of the diagram pages — measured on a
 237-position study, 20 pages instead of 237.
+
+![A grid page: twelve boards in reading order, each with its own eval bar, and its move, evaluation and comment underneath -- with the study's own arrows and circles drawn on the diagrams](docs/pdf-grid.png)
 
 Comments are trimmed to two lines in a grid cell; the notation section, which
 is on by default, still carries every comment in full.
@@ -272,6 +284,8 @@ study's own annotations, and optional `[+0.42]` evaluations beside each move.
 
 A 13-chapter study lands in about 16 pages. This is the mode to use for
 reading and printing.
+
+![A book page: two columns of justified figurine notation with bracketed evaluations, and printed-book diagrams carrying the study's arrows and a side-to-move marker](docs/pdf-book.png)
 
 Needs `pdflatex` (MiKTeX or TeX Live) with `xskak`, `chessboard`, `skak`.
 Without it the mode is disabled in the UI and the CLI says so.
@@ -382,6 +396,66 @@ lichess-study-pdf <study-url|chapter-url> [options]
 lichess-study-pdf serve [--host H] [--port P]
 lichess-study-pdf engine-info
 ```
+
+---
+
+## Hosting it for free
+
+This is a plain FastAPI/Uvicorn app with one runtime dependency worth caring
+about: Stockfish, invoked as a subprocess and kept warm for the life of the
+process ([server.py](lichess_study_pdf/server.py)). That rules out anything
+serverless (Vercel, AWS Lambda-style hosts) — you need something that runs a
+real, long-lived container. Two that do it for free:
+
+| | Hugging Face Spaces | Render.com |
+|---|---|---|
+| Cost | Free, no card required | Free tier — check current signup terms, this has changed before |
+| Runtime | Docker | Docker |
+| Idle behaviour | Sleeps, wakes on the next visit | Spins down after ~15 min idle; cold start on the next request |
+
+[`Dockerfile`](Dockerfile) in this folder installs Stockfish via `apt-get`
+(Debian's package, not a manual binary download) and deliberately skips
+LaTeX — a full texlive install is several GB and not worth it unless you
+specifically want book mode. It sets `STOCKFISH_PATH` to the apt package's
+install location so `find_stockfish()` finds it without relying on `PATH`.
+
+### Render
+
+1. Push this repo to GitHub.
+2. **New Web Service** → connect the repo → **Root Directory**:
+   `Lichess-Study-to-PDF` → Render auto-detects the Dockerfile → **Free**
+   instance type → deploy.
+3. You get a URL like `https://<name>.onrender.com`.
+
+### Hugging Face Spaces
+
+Spaces are their own separate git repo (not this GitHub repo), so:
+
+1. **New Space** → **SDK: Docker** → **Hardware: CPU basic (free)**.
+2. Clone the Space's repo locally, then copy this folder's **contents**
+   (`Dockerfile`, `requirements.txt`, `lichess_study_pdf/`, etc.) into its
+   root — not the `Lichess-Study-to-PDF` folder itself, what's inside it.
+3. Add this to the top of the Space's `README.md`:
+   ```yaml
+   ---
+   title: Lichess Study to PDF
+   sdk: docker
+   app_port: 7860
+   ---
+   ```
+4. Commit and push (a Hugging Face access token as the git password).
+
+### Before you make it public
+
+- **Don't set `LICHESS_TOKEN` on a public deployment.** It would be shared by
+  every visitor — anyone with the URL could pull whatever private studies
+  that token can see. Leave it unset; paste a token into the UI per session
+  instead, the same as running it locally.
+- There is no password wall here by default — anyone with the link can use
+  the tool (not access your Lichess account, just use the app). If you want
+  one, the sibling app has it wired up — see
+  [Repertoire Creator's hosting section](../Repertoire-Creator/README.md#hosting-it-for-free)
+  for the pattern; it is not implemented in this app.
 
 ---
 

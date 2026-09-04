@@ -16,6 +16,17 @@ Lichess-Study-to-PDF/engine/*
 *.pdf
 !Lichess-Study-to-PDF/docs/*.pdf
 
+# Chess Analyzer: imported games, the position cache, downloaded engines and
+# the openings index are all regenerated on demand.
+ChessAnalyzer/games/
+ChessAnalyzer/data/
+ChessAnalyzer/engines/*
+!ChessAnalyzer/engines/.gitkeep
+
+# Real-browser profile used by tests/test_layout.py -- ~230MB and pure test
+# artifact, never source.
+ChessAnalyzer/tests/edge-profile/
+
 # Never commit a Lichess API token
 .lichess_token
 .env

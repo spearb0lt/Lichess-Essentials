@@ -776,6 +776,39 @@ function stepBack() {
   if (up !== null) goTo(up);
 }
 
+/* Scrolling the board walks the line: down goes forward, up goes back.
+ *
+ * Two things stop this feeling broken. Deltas are normalised, because a wheel
+ * notch is 100 in most browsers but 3 in line mode and 1 in page mode, so
+ * acting on the raw number means the app behaves differently per browser. And
+ * a step needs an accumulated threshold rather than firing per event: a
+ * trackpad sends a stream of single-digit deltas, and one flick would
+ * otherwise skip through ten moves.
+ */
+const WHEEL_THRESHOLD = 26;
+const WHEEL_GESTURE = 400;
+let wheelTotal = 0;
+let wheelAt = 0;
+
+function onWheel(event) {
+  // During a drill the board is a question, not a line you may leaf through.
+  // Returning without preventDefault lets the page scroll as it normally
+  // would, rather than silently swallowing the gesture.
+  if (state.drill && state.drill.card) return;
+
+  const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 100 : 1;
+  const now = Date.now();
+  if (now - wheelAt > WHEEL_GESTURE) wheelTotal = 0;
+  wheelAt = now;
+  wheelTotal += event.deltaY * scale;
+
+  event.preventDefault();
+  if (Math.abs(wheelTotal) < WHEEL_THRESHOLD) return;
+  const forward = wheelTotal > 0;
+  wheelTotal = 0;
+  if (forward) stepForward(); else stepBack();
+}
+
 // ---------------------------------------------------------------- editing
 
 function docUrl(suffix) {
@@ -1706,6 +1739,7 @@ function wire() {
   $("btn-prev").addEventListener("click", stepBack);
   $("btn-next").addEventListener("click", stepForward);
   $("btn-last").addEventListener("click", () => goTo(lastOfLine(state.path)));
+  $("board-box").addEventListener("wheel", onWheel, { passive: false });
   $("btn-flip").addEventListener("click", flipBoard);
   $("btn-delete").addEventListener("click", deleteCurrent);
   $("btn-promote").addEventListener("click", promoteCurrent);

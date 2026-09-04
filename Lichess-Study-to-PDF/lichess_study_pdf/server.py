@@ -207,9 +207,29 @@ class ExportRequest(BaseModel):
 # ------------------------------------------------------------------ routes
 
 
+def _asset_stamp(html: str) -> str:
+    """Append ?v=<mtime> to the local /static/ assets.
+
+    StaticFiles sends no Cache-Control, so browsers cache app.js and style.css
+    heuristically and can keep serving a stale copy for hours after a deploy --
+    long enough that a fix looks like it simply did not work.  Stamping the URL
+    with the file's mtime makes every edit a new URL, so the browser refetches.
+    """
+    for name in ("app.js", "style.css"):
+        path = WEB_DIR / name
+        if not path.exists():
+            continue
+        html = html.replace(
+            f'"/static/{name}"', f'"/static/{name}?v={int(path.stat().st_mtime)}"'
+        )
+    return html
+
+
 @app.get("/", response_class=HTMLResponse)
 def index() -> HTMLResponse:
-    return HTMLResponse((WEB_DIR / "index.html").read_text(encoding="utf-8"))
+    html = _asset_stamp((WEB_DIR / "index.html").read_text(encoding="utf-8"))
+    # The HTML itself must never be cached, or the stamped URLs never arrive.
+    return HTMLResponse(html, headers={"Cache-Control": "no-store"})
 
 
 @app.get("/api/health")

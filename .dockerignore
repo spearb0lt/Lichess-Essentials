@@ -1,0 +1,13 @@
+# Docker always reads .dockerignore from the BUILD CONTEXT root, regardless
+# of where the Dockerfile itself lives -- so this stays here even though
+# Repertoire-Creator/Dockerfile builds with the repo root as its context.
+# See Repertoire-Creator/README.md "Hosting it for free".
+.git
+.lichess
+__pycache__
+*.pyc
+*.pdf
+Lichess-Study-to-PDF/engine
+Lichess-Study-to-PDF/out
+Lichess-Study-to-PDF/tests
+Repertoire-Creator/tests

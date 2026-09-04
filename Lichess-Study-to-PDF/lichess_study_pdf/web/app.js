@@ -174,6 +174,40 @@ function step(delta) {
   goTo(target);
 }
 
+/* Scrolling the board walks the study: down goes forward, up goes back, and
+ * it stops the autoplay the same way the arrow keys do.
+ *
+ * Two things stop this feeling broken. Deltas are normalised, because a wheel
+ * notch is 100 in most browsers but 3 in line mode and 1 in page mode, so
+ * acting on the raw number means the app behaves differently per browser. And
+ * a step needs an accumulated threshold rather than firing per event: a
+ * trackpad sends a stream of single-digit deltas, and one flick would
+ * otherwise skip through ten moves.
+ */
+const WHEEL_THRESHOLD = 26;
+const WHEEL_GESTURE = 400;
+let wheelTotal = 0;
+let wheelAt = 0;
+
+function onWheel(event) {
+  // Nothing loaded is nothing to step through, so leave the page scrolling
+  // alone rather than swallowing the gesture for no result.
+  if (!state.chapter) return;
+
+  const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 100 : 1;
+  const now = Date.now();
+  if (now - wheelAt > WHEEL_GESTURE) wheelTotal = 0;
+  wheelAt = now;
+  wheelTotal += event.deltaY * scale;
+
+  event.preventDefault();
+  if (Math.abs(wheelTotal) < WHEEL_THRESHOLD) return;
+  const forward = wheelTotal > 0;
+  wheelTotal = 0;
+  stopAutoplay();
+  step(forward ? 1 : -1);
+}
+
 function stopAutoplay() {
   if (state.autoplay) {
     clearInterval(state.autoplay);
@@ -340,9 +374,25 @@ function renderPosition() {
   $("btn-next").disabled = !!state.free || nextIndex(state.stepIndex) == null;
 }
 
+/** Scroll ``box`` the least it takes to reveal ``node`` -- and scroll nothing else.
+
+    scrollIntoView() would also scroll every scrollable ancestor, and on the
+    single-column layout (<=1150px, which is what phones get even in desktop
+    mode) that includes the window -- which dragged the page down to the
+    notation and the board off screen. */
+function scrollIntoBox(box, node) {
+  if (!box || !node) return;
+  const nodeBox = node.getBoundingClientRect();
+  const boxBox = box.getBoundingClientRect();
+  let delta = 0;
+  if (nodeBox.top < boxBox.top) delta = nodeBox.top - boxBox.top;
+  else if (nodeBox.bottom > boxBox.bottom) delta = nodeBox.bottom - boxBox.bottom;
+  if (delta) box.scrollBy({ top: delta, behavior: "smooth" });
+}
+
 function scrollMoveIntoView() {
-  const node = document.querySelector(`.mv[data-index="${state.stepIndex}"]`);
-  if (node) node.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  scrollIntoBox($("moves"),
+    document.querySelector(`.mv[data-index="${state.stepIndex}"]`));
 }
 
 function evalFraction(ev) {
@@ -547,6 +597,19 @@ function renderChapters() {
   list.querySelectorAll("li").forEach((node) => {
     node.addEventListener("click", () => selectChapter(Number(node.dataset.index)));
   });
+
+  const count = state.study ? state.study.chapters.length : 0;
+  $("btn-chapter-prev").disabled = state.chapterIndex <= 0;
+  $("btn-chapter-next").disabled = state.chapterIndex >= count - 1;
+  // Jumping by button should bring the highlighted chapter into the sidebar.
+  scrollIntoBox(list, list.querySelector("li.active"));
+}
+
+function stepChapter(delta) {
+  if (!state.study) return;
+  const target = state.chapterIndex + delta;
+  if (target < 0 || target >= state.study.chapters.length) return;
+  selectChapter(target);          // already stops autoplay and resets the line
 }
 
 function selectChapter(index) {
@@ -875,6 +938,12 @@ function onKeyDown(event) {
   if (tag === "input" || tag === "select" || tag === "textarea") return;
   if (!$("export-dialog").classList.contains("hidden")) return;
 
+  if (event.shiftKey && (event.key === "ArrowRight" || event.key === "ArrowLeft")) {
+    event.preventDefault();
+    stepChapter(event.key === "ArrowRight" ? 1 : -1);
+    return;
+  }
+
   switch (event.key) {
     case " ": case "ArrowRight": case "ArrowDown":
       event.preventDefault(); stopAutoplay(); step(1); break;
@@ -908,6 +977,7 @@ async function init() {
     else $("home").classList.add("hidden");
   });
 
+  $("board-box").addEventListener("wheel", onWheel, { passive: false });
   $("btn-next").addEventListener("click", () => { stopAutoplay(); step(1); });
   $("btn-prev").addEventListener("click", () => { stopAutoplay(); step(-1); });
   $("btn-first").addEventListener("click", () => { stopAutoplay(); goTo(0); });
@@ -917,6 +987,8 @@ async function init() {
     state.flipped = !state.flipped; boardCache.clear(); renderPosition();
   });
   $("btn-play").addEventListener("click", toggleAutoplay);
+  $("btn-chapter-prev").addEventListener("click", () => stepChapter(-1));
+  $("btn-chapter-next").addEventListener("click", () => stepChapter(1));
   $("free-back").addEventListener("click", returnToLine);
 
   $("export-open").addEventListener("click", () => {

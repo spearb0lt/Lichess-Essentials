@@ -16,6 +16,8 @@ Local PGN files  ──push──▶  Lichess study
       └──▶ drill mode
 ```
 
+![The Ruy Lopez repertoire open: the chapter list on the left, the board with a live eval bar beside it, the move tree on the right with sidelines boxed, and ranked engine suggestions under the board with a tick against the move already in the tree](docs/editor.png)
+
 ## What it does
 
 | | |
@@ -31,6 +33,20 @@ Local PGN files  ──push──▶  Lichess study
 | **Saves itself** | Every edit is written to disk as you make it, and optionally committed to git and pushed, so the repertoire survives the machine. |
 | **Publish** | Create the Lichess study and push chapters into it. Pushing again updates those same chapters in place rather than duplicating them. |
 | **PDF** | A typeset chess book, a contact sheet of diagrams, or a step-through slideshow — reusing the sibling app's exporter. |
+
+Three of those tabs read the repertoire back to you rather than letting you
+write into it, and each one is only possible because the app knows which side
+you play:
+
+| Gaps — every position where it is your turn and you wrote nothing, with a sentence saying why each one counts | Transpositions — the same position by two move orders, flagged loudly when your answers differ |
+|---|---|
+| ![The Gaps tab listing an undecided move, three positions with no reply, and a line that stops early](docs/gaps.png) | ![The Transpositions tab listing three positions each reached by more than one move order](docs/transpositions.png) |
+
+Drill is the third. The app plays the opponent and the board becomes a
+question — you have to find what you wrote, and anything else counts as a miss
+and comes back sooner:
+
+![A drill session in progress: the board reads "Your move -- play your repertoire" and the panel shows question 1 of 7, with buttons for I do not remember and Stop](docs/drill.png)
 
 ## Setup
 
@@ -86,7 +102,12 @@ cd Repertoire-Creator
 
 Open <http://127.0.0.1:8778>. `Ctrl+C` stops it.
 
-### Keyboard
+### Keyboard and mouse
+
+Scrolling the mouse wheel over the board steps through the line — down goes
+forward, up goes back. Trackpads work too: a flick is one move, not ten.
+During a drill the board is a question rather than a line, so the wheel scrolls
+the page as usual.
 
 | Key | |
 |---|---|
@@ -131,6 +152,8 @@ engine's opinion of how to fill it are on screen together.
 The **Book** tab shows what the book knows about the position you are on and
 which recording or chapter each move came from. The **Gaps** tab lists every
 place a recording runs out.
+
+![Universal mode with the assist on: a banner reading "Your book plays Nxe5" with the move drawn on the board as an arrow, and the Book tab naming the recording it came from](docs/universal.png)
 
 Universal mode is local by default. **Publish the book** merges the recordings
 and splits them into one chapter per opening move, then pushes that as a study;
@@ -283,6 +306,107 @@ Run them through the venv the same way as `serve`, e.g.
 No network and no engine: the Lichess client is faked, so the sync logic —
 which chapter is created, which is updated in place, which is skipped — is
 covered without a token.
+
+## Hosting it for free
+
+Same profile as
+[the sibling app](../Lichess-Study-to-PDF/README.md#hosting-it-for-free) —
+FastAPI/Uvicorn needing a real container, not a serverless host — plus two
+things that make this app's setup different:
+
+1. **It needs the sibling package.** The eval bar and PDF export come from
+   `pip install -e Lichess-Study-to-PDF` (see Setup, above), so the Docker
+   build context has to be the **repository root**, not this folder.
+2. **It writes your repertoire to disk, and free containers are ephemeral.**
+   A redeploy — and possibly a wake from sleep, depending on the host — wipes
+   anything not baked into the image. The fix is the git auto-commit this app
+   already has (see "Saving", above), pointed at a dedicated GitHub repo
+   instead of a folder inside this one.
+
+[`Dockerfile`](Dockerfile) and [`entrypoint.sh`](entrypoint.sh) live in this
+folder, same as any other app in this repo — but the build still has to run
+with the **repository root** as its context, not this folder, so it can see
+the sibling package. Docker keeps those two concerns separate: "where is the
+Dockerfile" and "what can `COPY` see" are independent settings (the `-f` flag
+to `docker build`), which is what Render's separate **Root Directory** /
+**Dockerfile Path** fields below are for. Everything the Dockerfile `COPY`s
+is written relative to that repo-root context, e.g.
+`COPY Repertoire-Creator/requirements.txt ...`, which is why it looks a
+little different from a Dockerfile that lives with its own self-contained
+app. The one exception is `.dockerignore` — Docker always reads that from
+the context root regardless of where the Dockerfile sits, so it stays at
+[the repository root](../.dockerignore).
+
+The entrypoint's rule is deliberately simple and never destructive: the
+GitHub data repo wins once it has a single commit in it — every boot after
+the first clones it fresh rather than trusting whatever is baked into the
+image, and nothing here ever force-pushes.
+
+### One-time: a private data repo
+
+1. Create a new, **private** GitHub repo — e.g. `repertoire-data`. Leave it
+   empty.
+2. Generate a fine-grained Personal Access Token scoped to *only* that repo,
+   with **Contents: Read and write** permission.
+3. Build `https://<token>@github.com/<you>/repertoire-data.git`. This whole
+   string is a secret: set it once as an environment variable on your host,
+   never commit it, never paste it anywhere else.
+
+### Render
+
+1. Push this repo to GitHub.
+2. **New Web Service** → connect the repo → **Root Directory**: leave blank
+   (repo root, so the build context can see both apps) → **Dockerfile Path**:
+   `Repertoire-Creator/Dockerfile` → **Free** instance.
+3. Add environment variables, marked **secret**:
+   - `REPERTOIRE_GIT_REMOTE_URL` — the token URL from above
+   - `REPERTOIRE_AUTH_USER` / `REPERTOIRE_AUTH_PASS` — optional, see
+     "Locking it behind a password" below
+4. Deploy, and check the logs for the first-boot message about publishing
+   seed data to the data repo — then confirm it landed in `repertoire-data`
+   on GitHub.
+
+### Hugging Face Spaces
+
+Spaces are their own separate git repo, so:
+
+1. **New Space** → **SDK: Docker** → **Hardware: CPU basic (free)**.
+2. Clone the Space's repo locally. Copy in, preserving folder names:
+   `Lichess-Study-to-PDF/` and `Repertoire-Creator/` (the latter already
+   contains `Dockerfile` and `entrypoint.sh`) — then copy
+   `Repertoire-Creator/Dockerfile` up to the **Space repo's own root** as
+   well, since (unlike Render) Spaces always build whatever is literally
+   named `Dockerfile` at their repo root, with no separate path setting.
+3. Add this to the top of the Space's `README.md`:
+   ```yaml
+   ---
+   title: Repertoire Creator
+   sdk: docker
+   app_port: 7860
+   ---
+   ```
+4. **Settings → Repository secrets**: the same environment variables as
+   Render, above.
+5. Commit and push (a Hugging Face access token as the git password).
+
+### Locking it behind a password
+
+[`server.py`](repertoire_creator/server.py) has an HTTP Basic Auth gate that
+only activates when both `REPERTOIRE_AUTH_USER` and `REPERTOIRE_AUTH_PASS`
+are set — leave them unset and local `repertoire serve` is unaffected. Set
+both as secrets on whichever host you use and every route, API included,
+asks for that username and password before responding. It is one
+shared credential pair, not per-user accounts, sent over the HTTPS both
+Render and Hugging Face Spaces terminate by default on their `*.onrender.com`
+/ `*.hf.space` domains.
+
+### `LICHESS_TOKEN` on a public deployment
+
+Same caveat as "Saving" and "Publishing to Lichess" above, restated for
+hosting specifically: don't set it as an environment variable on a public
+deployment. It would be shared by every visitor, letting anyone with the URL
+publish to or read from whatever your token can access. Paste a token into
+the UI per session instead.
 
 ## Troubleshooting
 

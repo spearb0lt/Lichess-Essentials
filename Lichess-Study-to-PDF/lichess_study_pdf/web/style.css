@@ -153,6 +153,9 @@ button:disabled { opacity: .45; cursor: default; }
   margin-top: 14px; flex-wrap: wrap;
 }
 .controls .wide { min-width: 118px; }
+/* Chapter jumps sit at the two ends of the row, quieter than the move keys. */
+.controls .chapbtn { font-size: 12px; padding: 8px 10px; color: var(--muted); }
+.controls .chapbtn:hover:not(:disabled) { color: var(--ink); }
 
 .meta { margin-top: 14px; text-align: center; }
 .move-label { font-size: 22px; font-weight: 680; letter-spacing: -.2px; }

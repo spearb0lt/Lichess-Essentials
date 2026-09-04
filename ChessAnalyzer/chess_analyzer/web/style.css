@@ -1,0 +1,448 @@
+/* Same palette as the two sibling apps, so the three feel like one toolkit.
+   The label colours are this app's own, and are the one place the palette
+   grows: a review is unreadable without them. */
+:root {
+  --bg: #f4f1ea;
+  --panel: #ffffff;
+  --ink: #23201c;
+  --muted: #7d766c;
+  --faint: #b3aca1;
+  --rule: #e2ddd3;
+  --accent: #4a7c59;
+  --accent-dark: #3c6549;
+  --variation: #8a5a2b;
+  --hilite: #dcead0;
+  --danger: #a8402c;
+  --warn: #b3701a;
+  --radius: 8px;
+  --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 18px rgba(0,0,0,.05);
+
+  --sq-light: #f0d9b5;
+  --sq-dark: #b58863;
+  --sq-last: #cdd26a;
+  --sq-check: #e06c5a;
+
+  --l-brilliant: #1baca6;
+  --l-great: #5b8baf;
+  --l-best: #6a9c53;
+  --l-book: #a08c6a;
+  --l-excellent: #6a9c53;
+  --l-good: #96a06a;
+  --l-forced: #9a948a;
+  --l-inaccuracy: #d8a13a;
+  --l-mistake: #e07a2f;
+  --l-miss: #d5544a;
+  --l-blunder: #b23c2c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+h2 { font-size: 15px; margin: 0; }
+h3 { font-size: 16px; margin: 0 0 4px; }
+h4 { font-size: 13px; margin: 16px 0 6px; text-transform: uppercase;
+     letter-spacing: .06em; color: var(--muted); }
+.dim { color: var(--muted); }
+.small { font-size: 12px; }
+.hidden { display: none !important; }
+.spacer { flex: 1; }
+.grow { flex: 1; }
+code, .mono { font: 12px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; }
+
+button {
+  font: inherit; cursor: pointer;
+  border: 1px solid var(--rule); background: var(--panel); color: var(--ink);
+  padding: 7px 12px; border-radius: var(--radius);
+}
+button:hover { border-color: var(--faint); }
+button:disabled { opacity: .45; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.primary:hover:not(:disabled) { background: var(--accent-dark); }
+button.danger { color: var(--danger); }
+button.ghost { background: transparent; }
+button.block { display: block; width: 100%; text-align: center; margin-top: 6px; }
+button.small-btn { padding: 4px 9px; font-size: 12px; }
+
+.pill-button {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+  padding: 4px 10px; border-radius: 999px; background: var(--hilite);
+  color: var(--accent-dark); font-weight: 600; border-color: transparent;
+  max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.pill-button.warn { background: #fbeedd; color: var(--warn); }
+
+input, select, textarea {
+  font: inherit; color: var(--ink); background: #fdfcfa;
+  border: 1px solid var(--rule); border-radius: var(--radius); padding: 7px 10px;
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--accent); border-color: transparent;
+}
+textarea { resize: vertical; width: 100%; font: 12px/1.5 ui-monospace, Consolas, monospace; }
+
+.field { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+.field > span { font-size: 11px; text-transform: uppercase;
+                letter-spacing: .05em; color: var(--muted); }
+.check { display: flex; align-items: center; gap: 7px; margin: 6px 0; font-size: 13px; }
+.check input { width: auto; }
+
+/* ---------------------------------------------------------------- topbar */
+
+.topbar {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 10px 18px; background: var(--panel);
+  border-bottom: 1px solid var(--rule);
+}
+.brand { font-weight: 650; font-size: 16px; display: flex; align-items: center; gap: 9px; }
+.brand .mark {
+  font-size: 20px; color: var(--accent); background: var(--hilite);
+  border-radius: 6px; width: 30px; height: 30px; display: grid; place-items: center;
+}
+.picker { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 320px; }
+.picker input { flex: 1; }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+.status {
+  padding: 8px 18px; background: var(--hilite); color: var(--accent-dark);
+  border-bottom: 1px solid var(--rule); font-size: 13px;
+}
+.status.error { background: #f7e2de; color: var(--danger); }
+.status.warn { background: #fbeedd; color: var(--warn); }
+
+/* ---------------------------------------------------------------- layout */
+
+.layout {
+  display: grid; grid-template-columns: 300px minmax(420px, 1fr) 360px;
+  gap: 14px; padding: 14px; align-items: start;
+}
+@media (max-width: 1220px) {
+  .layout { grid-template-columns: 260px minmax(360px, 1fr); }
+  .panel.right { grid-column: 1 / -1; }
+}
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+  .panel.left, .panel.right { grid-column: auto; }
+}
+
+.panel {
+  background: var(--panel); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 12px; max-height: calc(100vh - 90px); overflow: auto;
+  /* Reserve the scrollbar's width whether or not one is showing. Without
+     this the centre panel oscillates: content grows past the panel, a
+     scrollbar appears, that narrows the box, the board (sized in %) shrinks,
+     the content now fits, the scrollbar goes away, the board grows back --
+     for ever, several times a second. */
+  scrollbar-gutter: stable;
+}
+.panel.centre { padding: 14px; }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--rule);
+        margin: -4px -4px 10px; padding: 0 4px 6px; }
+.tabs button {
+  border: none; background: transparent; padding: 5px 9px; font-size: 13px;
+  border-radius: 6px; color: var(--muted);
+}
+.tabs button.on { background: var(--hilite); color: var(--accent-dark); font-weight: 600; }
+
+.rowline { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.rowline input { flex: 1; min-width: 0; }
+.rowline .block { margin-top: 0; }
+
+/* ------------------------------------------------------------------ list */
+
+.list { display: flex; flex-direction: column; gap: 4px; }
+.item {
+  border: 1px solid var(--rule); border-radius: 6px; padding: 7px 9px;
+  cursor: pointer; background: #fdfcfa;
+}
+.item:hover { border-color: var(--faint); }
+.item.on { border-color: var(--accent); background: var(--hilite); }
+.item .line1 { display: flex; align-items: baseline; gap: 6px; }
+.item .names { font-weight: 600; font-size: 13px; flex: 1;
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .line2 { font-size: 11px; color: var(--muted); display: flex;
+               gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.item .res { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; }
+.item .acc { color: var(--accent-dark); font-weight: 600; }
+.item .actions { display: flex; gap: 4px; margin-top: 5px; }
+.empty { color: var(--muted); font-size: 13px; padding: 10px 2px; }
+
+/* ----------------------------------------------------------------- board */
+
+.players { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+.who { display: flex; align-items: baseline; gap: 8px; font-size: 13px; min-height: 20px; }
+.who .nm { font-weight: 600; }
+.who .rt { color: var(--muted); font-size: 12px; }
+.who .clk { margin-left: auto; font-variant-numeric: tabular-nums;
+            background: #f0ede6; padding: 1px 8px; border-radius: 5px; font-size: 13px; }
+.who .clk.on { background: var(--hilite); color: var(--accent-dark); font-weight: 600; }
+
+.board-wrap { display: flex; gap: 10px; align-items: stretch; }
+.evalbar {
+  position: relative; width: 22px; border-radius: 4px; overflow: hidden;
+  background: #3a352e; flex: none;
+}
+.evalfill {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 50%;
+  background: #f4f1ea; transition: height .18s ease;
+}
+.evaltext {
+  position: absolute; left: 0; right: 0; bottom: 3px; text-align: center;
+  font-size: 9px; font-weight: 700; color: #3a352e; z-index: 2;
+}
+.evalbar.flipped .evalfill { bottom: auto; top: 0; }
+.evalbar.flipped .evaltext { bottom: auto; top: 3px; }
+
+/* The board is square, so its width sets its height -- which means sizing it
+   by width alone pushes the graph and the controls off a short window.
+   --board-max is the height actually left over, measured by fitBoard() from
+   the things around it rather than guessed at with a magic number. */
+.board-box {
+  position: relative; flex: 1;
+  max-width: min(560px, var(--board-max, 560px));
+}
+#board { width: 100%; display: block; border-radius: 4px; touch-action: none; }
+#board .sq { cursor: pointer; }
+#board .hint { fill: rgba(35,32,28,.22); pointer-events: none; }
+#board .hint-capture { fill: none; stroke: rgba(35,32,28,.24); stroke-width: 9;
+                       pointer-events: none; }
+#board .pick { fill: rgba(74,124,89,.42); pointer-events: none; }
+#board .last { fill: var(--sq-last); opacity: .62; pointer-events: none; }
+#board .check { pointer-events: none; }
+#board .piece { pointer-events: none; }
+#board .coord { font: 600 13px system-ui, sans-serif; pointer-events: none; opacity: .55; }
+
+.badge circle { stroke: #fff; stroke-width: 3; }
+.badge text { font: 700 26px system-ui, sans-serif; fill: #fff;
+              text-anchor: middle; dominant-baseline: central; }
+
+.controls { display: flex; gap: 5px; align-items: center; margin-top: 10px; }
+.controls button { padding: 5px 11px; }
+.caption { font-size: 12px; color: var(--muted); text-align: right;
+           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+           flex: 0 0 auto; max-width: 45%; }
+
+.boardnote { margin-top: 8px; min-height: 18px; }
+.boardnote:empty { margin-top: 0; min-height: 0; }
+
+/* ----------------------------------------------------------------- graph */
+
+.graph-wrap { margin-top: 10px; position: relative; }
+#graph { width: 100%; height: 92px; display: block; background: #ece8e0;
+         border-radius: 5px; cursor: crosshair; }
+#graph .area-white { fill: #f7f4ee; }
+#graph .area-black { fill: #4a453d; }
+#graph .zero { stroke: rgba(35,32,28,.28); stroke-width: 1; }
+#graph .cursor { stroke: var(--accent); stroke-width: 3; }
+#graph .mark { stroke-width: 0; }
+.graph-phases { display: flex; font-size: 10px; color: var(--muted);
+                text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+.graph-phases span { border-left: 1px solid var(--rule); padding-left: 4px; }
+
+/* ---------------------------------------------------------------- review */
+
+.reviewbar { border-bottom: 1px solid var(--rule); padding-bottom: 10px; margin-bottom: 10px; }
+.progress { margin-top: 8px; }
+.bar { height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+.fill { height: 100%; width: 0; background: var(--accent); transition: width .2s ease; }
+
+.scorecard { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px;
+             align-items: center; margin-bottom: 12px; }
+.scorecard .who2 { font-size: 12px; font-weight: 600; overflow: hidden;
+                   text-overflow: ellipsis; white-space: nowrap; }
+.scorecard .big { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.scorecard .mid { font-size: 10px; color: var(--muted); text-transform: uppercase;
+                  letter-spacing: .06em; text-align: center; }
+.scorecard .r { text-align: right; }
+
+.statrow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px;
+           font-size: 12px; padding: 3px 0; border-top: 1px solid var(--rule);
+           font-variant-numeric: tabular-nums; }
+.statrow .lbl { text-align: center; color: var(--muted); font-size: 11px; }
+.statrow .r { text-align: right; }
+.statrow.head { border-top: none; }
+
+.labelrow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px;
+            align-items: center; font-size: 12px; padding: 2px 0;
+            font-variant-numeric: tabular-nums; }
+.labelrow .mid { display: flex; align-items: center; gap: 5px; justify-content: center;
+                 color: var(--muted); font-size: 11px; min-width: 96px; }
+.labelrow .r { text-align: right; }
+.chip { display: inline-grid; place-items: center; width: 17px; height: 17px;
+        border-radius: 50%; color: #fff; font-size: 10px; font-weight: 700; flex: none; }
+
+.opening-line { font-size: 12px; color: var(--muted); margin: 8px 0 10px;
+                padding: 7px 9px; background: #faf8f4; border-radius: 6px; }
+
+.moments { margin-top: 6px; }
+.moment { display: flex; gap: 8px; align-items: center; padding: 5px 6px;
+          border-radius: 6px; cursor: pointer; font-size: 12px; }
+.moment:hover { background: #faf8f4; }
+.moment .mv { font-weight: 600; font-variant-numeric: tabular-nums; min-width: 62px; }
+.moment .why { color: var(--muted); flex: 1; overflow: hidden;
+               text-overflow: ellipsis; white-space: nowrap; }
+
+/* ------------------------------------------------------------- move list */
+
+.movelist { display: flex; flex-direction: column; gap: 1px; }
+.moverow { display: grid; grid-template-columns: 34px 1fr 1fr; gap: 2px;
+           align-items: center; }
+.moverow .num { color: var(--faint); font-size: 12px; text-align: right;
+                padding-right: 5px; font-variant-numeric: tabular-nums; }
+.mv {
+  display: flex; align-items: center; gap: 5px; padding: 3px 6px;
+  border-radius: 5px; cursor: pointer; font-size: 13px; min-height: 26px;
+}
+.mv:hover { background: #f4f1ea; }
+.mv.on { background: var(--hilite); font-weight: 600; }
+.mv .san { font-variant-numeric: tabular-nums; }
+.mv .ev { margin-left: auto; font-size: 11px; color: var(--muted);
+          font-variant-numeric: tabular-nums; }
+
+/* --------------------------------------------------------- engine lines */
+
+.lines { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.lineitem { display: flex; gap: 8px; align-items: baseline; padding: 5px 7px;
+            border: 1px solid var(--rule); border-radius: 6px; cursor: pointer;
+            background: #fdfcfa; }
+.lineitem:hover { border-color: var(--accent); }
+.lineitem .sc { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 52px; }
+.lineitem .pv { color: var(--variation); font-size: 12px; overflow: hidden;
+                text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.lineitem .dp { color: var(--faint); font-size: 11px; }
+
+/* --------------------------------------------------------------- dialogs */
+
+dialog {
+  border: 1px solid var(--rule); border-radius: 10px; padding: 18px;
+  max-width: 620px; width: calc(100% - 36px); box-shadow: var(--shadow);
+  color: var(--ink); background: var(--panel); max-height: 86vh;
+}
+dialog::backdrop { background: rgba(35,32,28,.34); }
+.dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+.rule { display: grid; grid-template-columns: 22px 88px 1fr; gap: 8px;
+        align-items: start; padding: 5px 0; border-top: 1px solid var(--rule);
+        font-size: 12px; }
+.rule .nm { font-weight: 600; text-transform: capitalize; }
+.rule .tx { color: var(--muted); }
+
+/* ----------------------------------------------------- the board editor */
+
+.setup { border-top: 1px solid var(--rule); margin-top: 8px; padding-top: 8px; }
+
+.palette {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
+  margin-bottom: 8px;
+}
+.palette button {
+  padding: 2px; aspect-ratio: 1; display: grid; place-items: center;
+  background: #fdfcfa; border-radius: 5px;
+}
+/* The selected stamp has to be obvious at a glance: you are about to click
+   the board eight times with whatever this is. */
+.palette button.on {
+  border-color: var(--accent); background: var(--hilite);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.palette svg { width: 100%; height: 100%; display: block; }
+.palette .eraser { font-size: 15px; color: var(--muted); }
+
+.setup-tools { flex-wrap: wrap; }
+.setup-tools button { flex: 1; min-width: 88px; margin-top: 0; }
+
+.castling { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 2px; }
+.castling label {
+  display: flex; align-items: center; gap: 4px; font-size: 12px;
+  color: var(--ink);
+}
+.castling label.off { color: var(--faint); }
+.castling input { width: auto; }
+
+.setup-status { min-height: 32px; margin: 6px 0 0; }
+.setup-status.bad { color: var(--danger); white-space: pre-line; }
+.setup-status.good { color: var(--accent-dark); }
+
+/* An unmistakable frame while the board is an editing surface rather than a
+   game, because clicking it does something completely different. */
+#board.editing { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ------------------------------------------- the engine lines above the board */
+
+/* Deliberately small and tight: this sits between the players and the board,
+   and every pixel it takes is a pixel the board does not get. */
+.strip {
+  display: flex; flex-direction: column; gap: 2px;
+  margin-bottom: 6px; font-size: 12px; line-height: 1.45;
+}
+/* Every row is exactly this tall and the strip always draws the number of
+   rows you asked for, so an arriving evaluation never changes the height of
+   anything. A strip that grew from one line to three would resize the board
+   under your cursor mid-move. */
+.strip .row {
+  display: flex; align-items: baseline; gap: 7px; cursor: pointer;
+  padding: 1px 4px; border-radius: 4px; min-width: 0;
+  height: 20px; overflow: hidden;
+}
+.strip .row.blank { cursor: default; }
+.strip .row.blank:hover { background: none; }
+.strip .row:hover { background: #f4f1ea; }
+.strip .row.quiet { cursor: default; color: var(--muted); }
+.strip .row.quiet:hover { background: none; }
+
+/* The score chip, shared by the strip and the best line beside the controls
+   so the two read as one thing rather than two conventions. */
+.evchip {
+  font: 600 12px/1.5 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  background: #ece8e0; color: var(--ink);
+  padding: 0 6px; border-radius: 4px; flex: none;
+  min-width: 52px; text-align: center;
+}
+.evchip.plus { background: #e7eede; color: #3c6549; }
+.evchip.minus { background: #ded9d0; color: #3a352e; }
+
+.strip .pv {
+  color: var(--variation); flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.strip .dp { color: var(--faint); font-size: 11px; flex: none; }
+.strip .src { color: var(--faint); font-size: 11px; flex: none; }
+
+/* The engine's preferred move, in the controls row. Squeezed between the
+   buttons and the caption, so it truncates rather than pushing either out. */
+.bestline {
+  display: flex; align-items: center; gap: 6px;
+  flex: 1; min-width: 0; font-size: 12px;
+}
+.bestline .pv {
+  color: var(--variation); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.bestline .played { color: var(--muted); flex: none; }
+
+.pill-button.off { background: #ece8e0; color: var(--muted); }
+
+/* ------------------------------------------------------------- variations */
+
+/* Moves you tried that nobody played: bracketed and lighter, so the game's
+   own notation still reads as the game at a glance. */
+.variation {
+  font-size: 12px; line-height: 1.6; color: var(--muted);
+  padding: 2px 6px 3px 34px; border-left: 2px solid var(--rule);
+}
+.variation .paren { color: var(--faint); }
+.variation .vnum { color: var(--faint); margin: 0 2px 0 4px; }
+.variation .vm {
+  cursor: pointer; padding: 1px 3px; border-radius: 4px;
+  color: var(--variation);
+}
+.variation .vm:hover { background: #f4f1ea; }
+.variation .vm.on { background: var(--hilite); color: var(--accent-dark); font-weight: 600; }
+.variation .vnest { margin-left: 4px; }

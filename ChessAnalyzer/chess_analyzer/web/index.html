@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chess Analyzer</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- The piece sprite sheet is fetched and injected here at start-up. Chrome
+     does not support <use> across an external SVG file, so it has to be in
+     the document rather than referenced from it. -->
+<div id="sprite" hidden aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand"><span class="mark">&#9814;</span> Chess Analyzer</div>
+
+  <div class="picker">
+    <input id="import-text" type="text" spellcheck="false"
+           placeholder="Lichess or Chess.com game URL, a game id, a PGN, or a FEN">
+    <button id="btn-import" class="primary">Analyze</button>
+    <button id="btn-paste" class="ghost small-btn" title="Paste a multi-line PGN">PGN&hellip;</button>
+  </div>
+
+  <div class="topbar-right">
+    <button id="pill-lines" class="pill-button off"
+            title="Show the engine's lines above the board, all the time">Lines</button>
+    <button id="pill-engine" class="pill-button" title="Choose or download an engine">engine</button>
+    <button id="btn-settings" class="ghost small-btn">Settings</button>
+  </div>
+</header>
+
+<div id="status" class="status hidden"></div>
+
+<main class="layout">
+
+  <!-- ------------------------------------------------------------- left -->
+  <aside class="panel left">
+    <nav class="tabs" id="left-tabs">
+      <button data-tab="library" class="on">Library</button>
+      <button data-tab="lichess">Lichess</button>
+      <button data-tab="chesscom">Chess.com</button>
+      <button data-tab="live">Live</button>
+    </nav>
+
+    <section class="tabpanel" data-panel="library">
+      <div class="rowline">
+        <span class="dim small" id="library-count"></span>
+        <button id="btn-refresh-library" class="ghost small-btn">Refresh</button>
+      </div>
+      <div id="library-list" class="list"></div>
+    </section>
+
+    <section class="tabpanel hidden" data-panel="lichess">
+      <div class="rowline">
+        <input id="lichess-user" placeholder="Lichess username" spellcheck="false">
+        <button id="btn-lichess-load" class="small-btn">Load</button>
+      </div>
+      <div class="rowline">
+        <button id="btn-lichess-current" class="ghost small-btn block">
+          Are they playing right now?
+        </button>
+      </div>
+      <div id="lichess-list" class="list"></div>
+    </section>
+
+    <section class="tabpanel hidden" data-panel="chesscom">
+      <div class="rowline">
+        <input id="chesscom-user" placeholder="Chess.com username" spellcheck="false">
+        <button id="btn-chesscom-load" class="small-btn">Load</button>
+      </div>
+      <div class="rowline">
+        <button id="btn-chesscom-ongoing" class="ghost small-btn block">
+          Daily games in progress
+        </button>
+      </div>
+      <div id="chesscom-list" class="list"></div>
+    </section>
+
+    <section class="tabpanel hidden" data-panel="live">
+      <p class="small dim" id="live-intro">
+        Follow a game as it is played. The eval bar and the engine's best move
+        update on every move.
+      </p>
+      <div class="livestart">
+        <label class="field">
+          <span>Source</span>
+          <select id="live-kind">
+            <option value="lichess">Lichess &mdash; game URL, id, or username</option>
+            <option value="chesscom">Chess.com &mdash; game URL</option>
+            <option value="manual">Follow along &mdash; I click the moves</option>
+            <option value="setup">Arrange the board &mdash; set up the position</option>
+            <option value="pgn">Paste PGN &mdash; I re-paste as it grows</option>
+          </select>
+        </label>
+        <input id="live-reference" placeholder="URL, id or username" spellcheck="false">
+
+        <!-- The board editor. Shown only for the "arrange" source; while it is
+             open the board itself becomes the editing surface. -->
+        <div id="setup-panel" class="setup hidden">
+          <div class="palette" id="setup-palette"></div>
+          <div class="rowline setup-tools">
+            <button id="setup-from-board" class="ghost small-btn">From the board</button>
+            <button id="setup-start-pos" class="ghost small-btn">Start position</button>
+            <button id="setup-clear" class="ghost small-btn">Clear</button>
+          </div>
+
+          <label class="field">
+            <span>Who is to move</span>
+            <select id="setup-turn">
+              <option value="w">White to play</option>
+              <option value="b">Black to play</option>
+            </select>
+          </label>
+
+          <div class="field">
+            <span>Castling still allowed</span>
+            <div class="castling" id="setup-castling"></div>
+          </div>
+
+          <label class="field hidden" id="setup-ep-field">
+            <span>En passant available on</span>
+            <select id="setup-ep"></select>
+          </label>
+
+          <label class="field">
+            <span>Or paste a FEN</span>
+            <input id="setup-fen" spellcheck="false"
+                   placeholder="8/8/8/8/8/8/8/8 w - - 0 1">
+          </label>
+
+          <p class="small setup-status" id="setup-status"></p>
+        </div>
+
+        <button id="btn-live-start" class="primary block">Start watching</button>
+        <p class="small dim" id="live-hint"></p>
+      </div>
+      <div id="live-sessions" class="list"></div>
+      <div class="rowline">
+        <button id="btn-live-tv" class="ghost small-btn block">
+          Watch what Lichess is featuring
+        </button>
+      </div>
+    </section>
+  </aside>
+
+  <!-- ----------------------------------------------------------- centre -->
+  <section class="panel centre">
+    <div class="players">
+      <div class="who" id="who-top"></div>
+      <div class="who" id="who-bottom"></div>
+    </div>
+
+    <!-- The engine's ranked lines, above the board and always on while the
+         toggle in the top bar is lit. On a reviewed game these come from the
+         review itself, so scrolling through one costs no engine time. -->
+    <div id="engine-strip" class="strip hidden"></div>
+
+    <div class="board-wrap">
+      <div class="evalbar" id="evalbar">
+        <div class="evalfill" id="evalfill"></div>
+        <span class="evaltext" id="evaltext"></span>
+      </div>
+
+      <div class="board-box" id="board-box">
+        <svg id="board" viewBox="0 0 800 800" role="img" aria-label="Chess board">
+          <g id="layer-squares"></g>
+          <g id="layer-lastmove"></g>
+          <g id="layer-check"></g>
+          <g id="layer-hints"></g>
+          <g id="layer-pieces"></g>
+          <g id="layer-arrows"></g>
+          <g id="layer-badge"></g>
+          <g id="layer-coords"></g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="btn-first" title="Start (Home)">&#124;&#9664;</button>
+      <button id="btn-prev" title="Back (left arrow, or scroll down)">&#9664;</button>
+      <button id="btn-next" title="Forward (right arrow, or scroll up)">&#9654;</button>
+      <button id="btn-last" title="End (End key)">&#9654;&#124;</button>
+      <button id="btn-flip" title="Flip the board (f)">Flip</button>
+      <div id="best-line" class="bestline"></div>
+      <span id="move-caption" class="caption"></span>
+    </div>
+
+    <div class="graph-wrap">
+      <svg id="graph" viewBox="0 0 1000 120" preserveAspectRatio="none"
+           aria-label="Evaluation graph"></svg>
+      <div id="graph-phases" class="graph-phases"></div>
+    </div>
+
+    <div id="board-note" class="boardnote small dim"></div>
+  </section>
+
+  <!-- ------------------------------------------------------------ right -->
+  <aside class="panel right">
+    <nav class="tabs" id="right-tabs">
+      <button data-tab="review" class="on">Review</button>
+      <button data-tab="moves">Moves</button>
+      <button data-tab="engine">Engine</button>
+    </nav>
+
+    <section class="tabpanel" data-panel="review">
+      <div id="review-controls" class="reviewbar">
+        <label class="field">
+          <span>Depth of review</span>
+          <select id="review-preset"></select>
+        </label>
+        <p class="small dim" id="preset-detail"></p>
+        <button id="btn-review" class="primary block">Review this game</button>
+        <button id="btn-review-cancel" class="ghost block hidden">Stop</button>
+        <div id="review-progress" class="progress hidden">
+          <div class="bar"><div class="fill" id="review-fill"></div></div>
+          <span class="small dim" id="review-message"></span>
+        </div>
+      </div>
+      <div id="review-report"></div>
+    </section>
+
+    <section class="tabpanel hidden" data-panel="moves">
+      <div id="move-list" class="movelist"></div>
+    </section>
+
+    <section class="tabpanel hidden" data-panel="engine">
+      <div class="rowline">
+        <label class="field grow">
+          <span>Lines</span>
+          <input id="lines-count" type="number" min="1" max="5" value="3">
+        </label>
+        <label class="field grow">
+          <span>Seconds</span>
+          <input id="lines-time" type="number" min="0.1" max="30" step="0.1" value="0.6">
+        </label>
+      </div>
+      <p class="small dim" id="engine-toggle-note"></p>
+      <div id="engine-lines" class="lines"></div>
+      <div id="engine-note" class="small dim"></div>
+    </section>
+  </aside>
+</main>
+
+<!-- ------------------------------------------------------------- dialogs -->
+
+<dialog id="dlg-paste">
+  <h3>Paste a PGN</h3>
+  <p class="small dim">Anything Lichess, Chess.com or a database exports.
+     Variations and comments are kept; only the main line is reviewed.</p>
+  <textarea id="paste-text" rows="14" spellcheck="false"
+            placeholder="[Event &quot;...&quot;]&#10;&#10;1. e4 e5 2. Nf3 ..."></textarea>
+  <div class="dlg-actions">
+    <button id="paste-cancel" class="ghost">Cancel</button>
+    <button id="paste-ok" class="primary">Import</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-engines">
+  <h3>Engines</h3>
+  <p class="small dim" id="engine-dir"></p>
+
+  <h4>On this machine</h4>
+  <div id="engine-found" class="list"></div>
+
+  <h4>Download</h4>
+  <p class="small dim">
+    Fetched from each project's own GitHub releases. The right build for your
+    CPU is picked automatically, and if it will not run here the next one down
+    is tried instead.
+  </p>
+  <div id="engine-downloads" class="list"></div>
+
+  <h4>Leela networks</h4>
+  <p class="small dim">
+    Lc0 needs a network as well as a binary. The Maia nets predict what a human
+    of that rating plays rather than what is best &mdash; useful for asking
+    whether a move was findable, never for judging one.
+  </p>
+  <div id="engine-networks" class="list"></div>
+
+  <div id="engine-job" class="progress hidden">
+    <div class="bar"><div class="fill" id="engine-fill"></div></div>
+    <span class="small dim" id="engine-message"></span>
+  </div>
+
+  <div class="dlg-actions">
+    <button id="engines-close" class="ghost">Close</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-settings">
+  <h3>Settings</h3>
+
+  <label class="field">
+    <span>Review engine</span>
+    <select id="set-review-engine"></select>
+  </label>
+  <label class="field">
+    <span>Analysis engine (the board and the eval bar)</span>
+    <select id="set-analysis-engine"></select>
+  </label>
+  <div class="rowline">
+    <label class="field grow"><span>Threads</span>
+      <input id="set-threads" type="number" min="1" max="32" value="2"></label>
+    <label class="field grow"><span>Hash (MB)</span>
+      <input id="set-hash" type="number" min="16" max="8192" step="16" value="256"></label>
+  </div>
+
+  <label class="field">
+    <span>Lichess API token &mdash; optional, never written to disk</span>
+    <input id="set-token" type="password" placeholder="lip_..." autocomplete="off">
+  </label>
+  <p class="small dim">
+    Nothing in this app needs a token: every endpoint it uses is public. One
+    only raises the rate limit when importing many games at once.
+  </p>
+
+  <div class="dlg-actions">
+    <button id="settings-cancel" class="ghost">Cancel</button>
+    <button id="settings-ok" class="primary">Save</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-rules">
+  <h3>What the labels mean</h3>
+  <p class="small dim" id="rules-intro"></p>
+  <div id="rules-list" class="list"></div>
+  <div class="dlg-actions">
+    <button id="rules-close" class="ghost">Close</button>
+  </div>
+</dialog>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

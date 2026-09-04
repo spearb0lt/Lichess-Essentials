@@ -1,0 +1,12 @@
+.git
+.lichess
+__pycache__
+.pytest_cache
+*.pyc
+# Regenerated on demand at runtime -- see the "What is kept on disk" section
+# of README.md. Baking stale copies into the image would only be misleading.
+games
+data
+engines
+# ~230MB real-browser profile used by tests/test_layout.py, not app code.
+tests
