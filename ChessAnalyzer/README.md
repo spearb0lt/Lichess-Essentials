@@ -7,6 +7,19 @@
 [![License](https://img.shields.io/pypi/l/chess-game-analyzer)](LICENSE)
 
 
+> ### Try it live
+>
+> **http://analyzer.79-72-84-141.sslip.io** — username `aayush`, password `xLpRoJIALb3Abp`
+>
+> Running on a free Oracle Cloud ARM machine, alongside the other four apps in
+> this repo. The credentials are shared and published on purpose so anyone can
+> try it; treat anything you put in as public.
+>
+> It is plain **HTTP** — there is no domain on it yet — so do not paste a
+> Lichess token you care about. See [FUTURE.md](../FUTURE.md) for how the
+> deployment works, how to reset these credentials, and how HTTPS gets turned
+> on.
+
 Review any chess game with an engine on your own machine — a Lichess game, a
 Chess.com game, a PGN you pasted, or a position you typed. Accuracy, move
 labels, an eval graph, the engine's best line at every point, and a live mode

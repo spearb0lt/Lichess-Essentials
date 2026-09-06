@@ -7,6 +7,19 @@
 [![License](https://img.shields.io/pypi/l/player-prepper)](LICENSE)
 
 
+> ### Try it live
+>
+> **http://prepper.79-72-84-141.sslip.io** — username `aayush`, password `5okPTQeWV6AdRC`
+>
+> Running on a free Oracle Cloud ARM machine, alongside the other four apps in
+> this repo. The credentials are shared and published on purpose so anyone can
+> try it; treat anything you put in as public.
+>
+> It is plain **HTTP** — there is no domain on it yet — so do not paste a
+> Lichess token you care about. See [FUTURE.md](../FUTURE.md) for how the
+> deployment works, how to reset these credentials, and how HTTPS gets turned
+> on.
+
 Scout an opponent from their own games, and find out what you have no answer
 for.
 

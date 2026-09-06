@@ -7,6 +7,19 @@
 [![License](https://img.shields.io/pypi/l/repertoire-creator)](LICENSE)
 
 
+> ### Try it live
+>
+> **http://repertoire.79-72-84-141.sslip.io** — username `aayush`, password `MXNgiboHu4kTcv`
+>
+> Running on a free Oracle Cloud ARM machine, alongside the other four apps in
+> this repo. The credentials are shared and published on purpose so anyone can
+> try it; treat anything you put in as public.
+>
+> It is plain **HTTP** — there is no domain on it yet — so do not paste a
+> Lichess token you care about. See [FUTURE.md](../FUTURE.md) for how the
+> deployment works, how to reset these credentials, and how HTTPS gets turned
+> on.
+
 Build a chess opening repertoire on your own machine — play the moves in on a
 board or type the notation, annotate them, watch a live engine eval bar as you
 go — then publish the whole thing to Lichess as a study, or export it as a PDF.

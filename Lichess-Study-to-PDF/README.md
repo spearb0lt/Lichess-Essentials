@@ -7,6 +7,18 @@
 [![License](https://img.shields.io/pypi/l/lichess-study-to-pdf)](LICENSE)
 
 
+> ### Try it live
+>
+> **http://study.79-72-84-141.sslip.io** — no login needed
+>
+> Running on a free Oracle Cloud ARM machine, alongside the other four apps in
+> this repo. This app has **no password gate implemented**, so anyone with the
+> link can use it.
+>
+> It is plain **HTTP** — there is no domain on it yet — so do not paste a
+> Lichess token you care about. See [FUTURE.md](../FUTURE.md) for how the
+> deployment works and how HTTPS gets turned on.
+
 Turn a Lichess study into a PDF worth reading, plus a browser interface for
 working through it first.
 

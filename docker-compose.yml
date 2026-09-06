@@ -15,13 +15,19 @@
 name: lichess-essentials
 
 # Shared settings. mem_limit is a safety cap, not a reservation -- one runaway
-# analysis should not be able to take the whole box down with it. The measured
-# peak for a single search at the apps' default Hash=256 is ~478MB, so 2g is
-# roomy; the Always Free box has 12GB and these never all peak at once.
+# analysis should not be able to take the whole box down with it.
+#
+# 1g, and the arithmetic matters: five containers x this number must stay under
+# the host's RAM. At 2g each that is 10GiB of limits on a 5.8GiB machine, which
+# means the HOST can exhaust before any single container hits its cap -- and the
+# host OOM killer chooses its own victim, possibly dockerd or sshd, taking
+# everything down instead of one app. At 1g the total is 5GiB, it fits, and it
+# is still double the 478MB measured peak for one search at the default
+# Hash=256. Raise it only alongside more RAM.
 x-app: &app
   restart: unless-stopped
   env_file: [.env]
-  mem_limit: 2g
+  mem_limit: 1g
   expose: ["7860"]
 
 services:

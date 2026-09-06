@@ -7,6 +7,27 @@
 [![License](https://img.shields.io/pypi/l/lichess-essentials)](LICENSE)
 
 
+> ### Try them live
+>
+> All five run on one free Oracle Cloud ARM machine. No install needed.
+>
+> | App | Link | Login |
+> |---|---|---|
+> | Lichess Study to PDF | http://study.79-72-84-141.sslip.io | *none — open* |
+> | Chess Analyzer | http://analyzer.79-72-84-141.sslip.io | `aayush` / `xLpRoJIALb3Abp` |
+> | Player Prepper | http://prepper.79-72-84-141.sslip.io | `aayush` / `5okPTQeWV6AdRC` |
+> | Repertoire Creator | http://repertoire.79-72-84-141.sslip.io | `aayush` / `MXNgiboHu4kTcv` |
+> | Weakness Report | http://weakness.79-72-84-141.sslip.io | `aayush` / `VdMainT5WEuWkr` |
+>
+> The credentials are shared and published on purpose so anyone can try these,
+> so treat anything you put in as public. Study to PDF has no password gate
+> implemented at all. It is plain **HTTP** for now — no domain on it yet — so
+> do not paste a Lichess token you care about; every app also takes one per
+> session in its own UI, which is the intended way to use them.
+>
+> [FUTURE.md](FUTURE.md) has the deployment details: how it is wired, how to
+> reset these credentials, and the exact steps to add a domain and HTTPS.
+
 Tools that fix the things I keep running into as a long-time Lichess user.
 Built for my own use, open source in case they are useful to anyone else.
 
