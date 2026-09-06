@@ -41,6 +41,7 @@ from .board import (
 )
 from .book import BookError, build_book, default_repertoire_dir, list_repertoires
 from .bridge import FeatureUnavailable, status as bridge_status
+from . import bridge
 from .fetch import MAX_GAMES, SPEEDS, FetchError
 from .jobs import RUNNER
 from .scout import DEFAULT_MIN_GAMES
@@ -399,7 +400,7 @@ def post_suggest(body: SuggestBody) -> dict:
         raise HTTPException(
             status_code=400,
             detail="Engine suggestions need the sibling app.\n"
-                   "From the repository root: pip install -e Lichess-Study-to-PDF")
+                   f"{bridge.INSTALL_HINT}")
 
     def run() -> dict:
         return engine.top_lines(body.fen, count=body.count,

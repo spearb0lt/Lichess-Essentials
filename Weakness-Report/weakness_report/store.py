@@ -37,6 +37,8 @@ import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import paths
+
 GAMES_DIR = "games"
 REVIEWS_DIR = "reviews"
 REPORTS_DIR = "reports"
@@ -55,10 +57,7 @@ def now_iso() -> str:
 
 def default_data_dir() -> Path:
     """The history folder: env override, else next to the package."""
-    env = os.environ.get("WEAKNESS_DIR")
-    if env:
-        return Path(env).expanduser().resolve()
-    return (Path(__file__).resolve().parent.parent / "history").resolve()
+    return paths.resolve(__file__, "history", "WEAKNESS_DIR")
 
 
 def slugify(text: str, fallback: str = "item") -> str:

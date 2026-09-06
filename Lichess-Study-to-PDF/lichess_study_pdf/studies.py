@@ -26,6 +26,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from . import paths
+
 from .fetch import StudyFetchError, parse_study_url
 
 #: Where the app writes studies saved from the UI.
@@ -43,7 +45,7 @@ def studies_path() -> Path:
     override = os.environ.get(ENV_VAR)
     if override:
         return Path(override).expanduser()
-    return Path(__file__).resolve().parent.parent / _DEFAULT_NAME
+    return paths.resolve(__file__, _DEFAULT_NAME)
 
 
 @dataclass(frozen=True)

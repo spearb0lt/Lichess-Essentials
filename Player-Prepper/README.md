@@ -1,5 +1,12 @@
 # Player Prepper
 
+[![PyPI](https://img.shields.io/pypi/v/player-prepper?logo=pypi&logoColor=white)](https://pypi.org/project/player-prepper/)
+[![Python](https://img.shields.io/pypi/pyversions/player-prepper)](https://pypi.org/project/player-prepper/)
+[![Downloads](https://static.pepy.tech/badge/player-prepper)](https://pepy.tech/project/player-prepper)
+[![Downloads](https://static.pepy.tech/badge/player-prepper/month)](https://pepy.tech/project/player-prepper)
+[![License](https://img.shields.io/pypi/l/player-prepper)](LICENSE)
+
+
 Scout an opponent from their own games, and find out what you have no answer
 for.
 
@@ -27,12 +34,27 @@ cd Player-Prepper
 
 Then open <http://127.0.0.1:8780>.
 
-![A finished scout: their record and coverage across the top, the gap list ranked by how many of their games reach each one, and the selected gap on the right with the engine's suggestion drawn on the board](docs/report.png)
+![A finished scout: their record and coverage across the top, the gap list ranked by how many of their games reach each one, and the selected gap on the right with the engine's suggestion drawn on the board](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Player-Prepper/docs/report.png)
 
 *Above: this opponent meets 1.e4 with the Scandinavian in 30 of their 60 games
 as Black, and the repertoire being measured has no move written down for it.*
 
 ---
+
+## Install
+
+```bash
+pip install player-prepper
+prepper serve
+```
+
+**Optional.** Engine suggestions for gaps, prep-sheet PDFs and private
+studies: `pip install "player-prepper[prep]"`.
+
+Or take all five at once with `pip install lichess-essentials`. Installed this
+way your files live in the usual per-user folder for your platform, and the
+app prints the path in its startup banner. To run it from a checkout instead,
+see [the repository README](https://github.com/spearb0lt/Lichess-Essentials/blob/main/README.md#setup-from-a-checkout).
 
 ## What a gap actually is
 
@@ -200,7 +222,7 @@ significance-tested**: the raw record and the sample size travel with every
 row so you can see a 100%-over-two-games for what it is, and the *smallest
 sample* setting on the left is the only filter.
 
-![The Where they leak tab: two moves in the Scandinavian ranked by points dropped, each with its full line, the opening name, the percentage and the raw win-draw-loss record](docs/weak-spots.png)
+![The Where they leak tab: two moves in the Scandinavian ranked by points dropped, each with its full line, the opening name, the percentage and the raw win-draw-loss record](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Player-Prepper/docs/weak-spots.png)
 
 ### Exploit
 
@@ -226,7 +248,7 @@ rank below a common line they are already losing. Turn *frequency* off and the
 rare brilliancies rise; turn *edge* off and it becomes a pure results ranking
 that works with no engine at all.
 
-![The Exploit tab: their choices ranked by opportunity score, each with the reply the engine wants, how many of their games reach it, how they score there and the winning chances you get](docs/exploit.png)
+![The Exploit tab: their choices ranked by opportunity score, each with the reply the engine wants, how many of their games reach it, how they score there and the winning chances you get](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Player-Prepper/docs/exploit.png)
 
 Every number in a row is from one point of view and it says which: *they score
 55%* is theirs, *you get 47%* is yours. The raw evaluation in pawns stays in
@@ -257,7 +279,7 @@ their move you get their choices; at a position where it was not, you get every
 reply their opponents actually made. Both carry counts and scores, so you can
 follow a line down to where it gets thin.
 
-![The Explore tab one move into their tree: after 1.e4, every reply their opponents played, with how many games and how the scouted player scored against each](docs/explore.png)
+![The Explore tab one move into their tree: after 1.e4, every reply their opponents played, with how many games and how the scouted player scored against each](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Player-Prepper/docs/explore.png)
 
 ---
 
@@ -318,7 +340,7 @@ tree with the numbers in the comments. It opens in any chess GUI.
 four styles the study exporter has. Grid is the one to use: a scouting report
 is a contact sheet, not a book.
 
-![A page of the exported prep sheet: twelve diagrams to a page in reading order, each with the move, how many games they played it in and how they scored, with sidelines colour-coded and named](docs/prep-sheet.png)
+![A page of the exported prep sheet: twelve diagrams to a page in reading order, each with the move, how many games they played it in and how they scored, with sidelines colour-coded and named](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Player-Prepper/docs/prep-sheet.png)
 
 Lines are merged into a tree rather than written one per chapter on purpose.
 Twenty gaps as twenty chapters is twenty nearly-empty pages, because every
@@ -484,12 +506,12 @@ container, not a serverless host — with one thing that makes this app's setup
 different: like Repertoire-Creator, it wants the sibling package, so the
 Docker build context has to be the **repository root**, not this folder.
 
-[`Dockerfile`](Dockerfile) lives here, same as every other app in this repo,
+[`Dockerfile`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Player-Prepper/Dockerfile) lives here, same as every other app in this repo,
 but must be built with the repo root as its context so it can `COPY` the
 sibling. Docker keeps those two concerns separate — "where is the Dockerfile"
 and "what can `COPY` see" — which is what Render's separate **Root Directory**
 and **Dockerfile Path** fields are for. `.dockerignore` is read from the
-context root regardless, so it stays at [the repository root](../.dockerignore).
+context root regardless, so it stays at [the repository root](https://github.com/spearb0lt/Lichess-Essentials/blob/main/dockerignore).
 
 It installs Stockfish via `apt-get` and sets `STOCKFISH_PATH`, so gap
 suggestions work on a hosted instance with nothing to configure. LaTeX is
@@ -537,7 +559,7 @@ Spaces are their own separate git repo, so:
 
 ### Locking it behind a password
 
-[`server.py`](player_prepper/server.py) has an HTTP Basic Auth gate that only
+[`server.py`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Player-Prepper/player_prepper/server.py) has an HTTP Basic Auth gate that only
 activates when both `PREPPER_AUTH_USER` and `PREPPER_AUTH_PASS` are set —
 leave them unset and local use is never asked for credentials. Set both as
 secrets and every route, API included, asks for that pair first. One shared
@@ -571,7 +593,7 @@ needs one anyway.
 
 ## Licence
 
-MIT — see [LICENSE](../LICENSE). Chess piece artwork in the board diagrams
+MIT — see [LICENSE](https://github.com/spearb0lt/Lichess-Essentials/blob/main/LICENSE). Chess piece artwork in the board diagrams
 comes from python-chess (Colin M.L. Burnett's Cburnett set, CC BY-SA 3.0);
 opening names come from
 [lichess-org/chess-openings](https://github.com/lichess-org/chess-openings)

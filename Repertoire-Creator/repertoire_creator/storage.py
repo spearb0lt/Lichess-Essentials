@@ -27,6 +27,8 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import paths
+
 import chess
 import chess.pgn
 
@@ -58,10 +60,7 @@ def now_iso() -> str:
 
 def default_data_dir() -> Path:
     """The repertoires folder: env override, else next to the package."""
-    env = os.environ.get("REPERTOIRE_DIR")
-    if env:
-        return Path(env).expanduser().resolve()
-    return (Path(__file__).resolve().parent.parent / "repertoires").resolve()
+    return paths.resolve(__file__, "repertoires", "REPERTOIRE_DIR")
 
 
 def slugify(text: str, fallback: str = "repertoire") -> str:

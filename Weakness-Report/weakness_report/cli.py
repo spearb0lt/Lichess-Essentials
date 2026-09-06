@@ -17,6 +17,7 @@ from pathlib import Path
 
 from . import aggregate, batch, exportcsv, pdf, pipeline
 from .bridge import FeatureUnavailable, analyzer, status as bridge_status
+from . import bridge
 from .sources import SPEEDS, SourceError
 from .store import Store, StoreError, default_data_dir
 
@@ -143,10 +144,10 @@ def cmd_serve(args) -> int:
         _say(f"  review rules ChessAnalyzer ({state['analyzerVia']})")
     else:
         _say("  review rules NOT FOUND - games cannot be reviewed")
-        _say("               keep the ChessAnalyzer folder beside this one, or")
-        _say("               set CHESS_ANALYZER_DIR, or pip install -e ChessAnalyzer")
+        for line in bridge.INSTALL_HINT.splitlines():
+            _say(f"               {line}")
     _say(f"  engine       {state['stockfish'] or 'not found - nothing can be reviewed'}")
-    _say(f"  pdf          {'ready' if state['study'] else 'no diagrams (pip install -e Lichess-Study-to-PDF)'}")
+    _say(f"  pdf          {'ready' if state['study'] else f'no diagrams ({bridge.STUDY_SHORT})'}")
     _say(f"  open         http://{args.host}:{args.port}")
     _say()
 

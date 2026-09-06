@@ -1,5 +1,12 @@
 # Repertoire Creator
 
+[![PyPI](https://img.shields.io/pypi/v/repertoire-creator?logo=pypi&logoColor=white)](https://pypi.org/project/repertoire-creator/)
+[![Python](https://img.shields.io/pypi/pyversions/repertoire-creator)](https://pypi.org/project/repertoire-creator/)
+[![Downloads](https://static.pepy.tech/badge/repertoire-creator)](https://pepy.tech/project/repertoire-creator)
+[![Downloads](https://static.pepy.tech/badge/repertoire-creator/month)](https://pepy.tech/project/repertoire-creator)
+[![License](https://img.shields.io/pypi/l/repertoire-creator)](LICENSE)
+
+
 Build a chess opening repertoire on your own machine — play the moves in on a
 board or type the notation, annotate them, watch a live engine eval bar as you
 go — then publish the whole thing to Lichess as a study, or export it as a PDF.
@@ -16,7 +23,21 @@ Local PGN files  ──push──▶  Lichess study
       └──▶ drill mode
 ```
 
-![The Ruy Lopez repertoire open: the chapter list on the left, the board with a live eval bar beside it, the move tree on the right with sidelines boxed, and ranked engine suggestions under the board with a tick against the move already in the tree](docs/editor.png)
+![The Ruy Lopez repertoire open: the chapter list on the left, the board with a live eval bar beside it, the move tree on the right with sidelines boxed, and ranked engine suggestions under the board with a tick against the move already in the tree](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Repertoire-Creator/docs/editor.png)
+
+## Install
+
+```bash
+pip install repertoire-creator
+repertoire serve
+```
+
+**Optional.** PDF export: `pip install "repertoire-creator[pdf]"`.
+
+Or take all five at once with `pip install lichess-essentials`. Installed this
+way your files live in the usual per-user folder for your platform, and the
+app prints the path in its startup banner. To run it from a checkout instead,
+see [the repository README](https://github.com/spearb0lt/Lichess-Essentials/blob/main/README.md#setup-from-a-checkout).
 
 ## What it does
 
@@ -40,13 +61,13 @@ you play:
 
 | Gaps — every position where it is your turn and you wrote nothing, with a sentence saying why each one counts | Transpositions — the same position by two move orders, flagged loudly when your answers differ |
 |---|---|
-| ![The Gaps tab listing an undecided move, three positions with no reply, and a line that stops early](docs/gaps.png) | ![The Transpositions tab listing three positions each reached by more than one move order](docs/transpositions.png) |
+| ![The Gaps tab listing an undecided move, three positions with no reply, and a line that stops early](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Repertoire-Creator/docs/gaps.png) | ![The Transpositions tab listing three positions each reached by more than one move order](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Repertoire-Creator/docs/transpositions.png) |
 
 Drill is the third. The app plays the opponent and the board becomes a
 question — you have to find what you wrote, and anything else counts as a miss
 and comes back sooner:
 
-![A drill session in progress: the board reads "Your move -- play your repertoire" and the panel shows question 1 of 7, with buttons for I do not remember and Stop](docs/drill.png)
+![A drill session in progress: the board reads "Your move -- play your repertoire" and the panel shows question 1 of 7, with buttons for I do not remember and Stop](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Repertoire-Creator/docs/drill.png)
 
 ## Setup
 
@@ -153,7 +174,7 @@ The **Book** tab shows what the book knows about the position you are on and
 which recording or chapter each move came from. The **Gaps** tab lists every
 place a recording runs out.
 
-![Universal mode with the assist on: a banner reading "Your book plays Nxe5" with the move drawn on the board as an arrow, and the Book tab naming the recording it came from](docs/universal.png)
+![Universal mode with the assist on: a banner reading "Your book plays Nxe5" with the move drawn on the board as an arrow, and the Book tab naming the recording it came from](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Repertoire-Creator/docs/universal.png)
 
 Universal mode is local by default. **Publish the book** merges the recordings
 and splits them into one chapter per opening move, then pushes that as a study;
@@ -310,7 +331,7 @@ covered without a token.
 ## Hosting it for free
 
 Same profile as
-[the sibling app](../Lichess-Study-to-PDF/README.md#hosting-it-for-free) —
+[the sibling app](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Lichess-Study-to-PDF/README.md#hosting-it-for-free) —
 FastAPI/Uvicorn needing a real container, not a serverless host — plus two
 things that make this app's setup different:
 
@@ -323,7 +344,7 @@ things that make this app's setup different:
    already has (see "Saving", above), pointed at a dedicated GitHub repo
    instead of a folder inside this one.
 
-[`Dockerfile`](Dockerfile) and [`entrypoint.sh`](entrypoint.sh) live in this
+[`Dockerfile`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Repertoire-Creator/Dockerfile) and [`entrypoint.sh`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Repertoire-Creator/entrypoint.sh) live in this
 folder, same as any other app in this repo — but the build still has to run
 with the **repository root** as its context, not this folder, so it can see
 the sibling package. Docker keeps those two concerns separate: "where is the
@@ -335,7 +356,7 @@ is written relative to that repo-root context, e.g.
 little different from a Dockerfile that lives with its own self-contained
 app. The one exception is `.dockerignore` — Docker always reads that from
 the context root regardless of where the Dockerfile sits, so it stays at
-[the repository root](../.dockerignore).
+[the repository root](https://github.com/spearb0lt/Lichess-Essentials/blob/main/dockerignore).
 
 The entrypoint's rule is deliberately simple and never destructive: the
 GitHub data repo wins once it has a single commit in it — every boot after
@@ -391,7 +412,7 @@ Spaces are their own separate git repo, so:
 
 ### Locking it behind a password
 
-[`server.py`](repertoire_creator/server.py) has an HTTP Basic Auth gate that
+[`server.py`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Repertoire-Creator/repertoire_creator/server.py) has an HTTP Basic Auth gate that
 only activates when both `REPERTOIRE_AUTH_USER` and `REPERTOIRE_AUTH_PASS`
 are set — leave them unset and local `repertoire serve` is unaffected. Set
 both as secrets on whichever host you use and every route, API included,

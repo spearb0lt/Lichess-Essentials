@@ -31,7 +31,9 @@ import chess
 import chess.pgn
 import requests
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+from . import paths
+
+DATA_DIR = paths.resolve(__file__, "data", "ANALYZER_DATA_DIR")
 INDEX_FILE = DATA_DIR / "openings.json"
 
 SOURCE = ("https://raw.githubusercontent.com/lichess-org/"

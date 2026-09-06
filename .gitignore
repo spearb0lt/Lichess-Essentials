@@ -41,3 +41,19 @@ Weakness-Report/history/
 # Never commit a Lichess API token
 .lichess_token
 .env
+
+# Never commit PyPI credentials or built distributions
+.pypirc
+dist/
+*.whl
+*.tar.gz
+
+# Never commit SSH private keys. Oracle's console downloads these straight to
+# your browser's download folder, and moving one into a repo directory is an
+# easy accident -- this repo is public, and a leaked private key is a
+# handover of the server it opens.
+*.key
+*.key.pub
+*.pem
+id_rsa
+id_ed25519

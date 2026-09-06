@@ -32,22 +32,48 @@ cache be reused across runs.  See :mod:`weakness_report.batch`.
 from __future__ import annotations
 
 import importlib
+import importlib.util          # not implied by ``import importlib``
 import os
 import sys
 from pathlib import Path
 
-INSTALL_HINT = (
-    "Weakness Report reads its review rules from the sibling ChessAnalyzer\n"
-    "app, so that both apps agree about the same game. Keep the folder\n"
-    "'ChessAnalyzer' next to this one in the repository, or point\n"
-    "CHESS_ANALYZER_DIR at your copy, or from the repository root run:\n"
-    "  pip install -e ChessAnalyzer"
-)
+from . import paths
 
-STUDY_HINT = (
-    "This needs the sibling study exporter. From the repository root run:\n"
-    "  pip install -e Lichess-Study-to-PDF"
-)
+
+def _hints() -> tuple[str, str, str]:
+    """The three install messages, phrased for how this app was installed.
+
+    From a checkout ChessAnalyzer is the folder next door and the answer is
+    an editable install of it. From PyPI it is a hard dependency, so if it is
+    missing the environment is broken rather than merely incomplete, and the
+    honest advice is to reinstall. Resolved once at import.
+    """
+    if paths.source_root(__file__) is not None:
+        return (
+            "Weakness Report reads its review rules from the sibling ChessAnalyzer\n"
+            "app, so that both apps agree about the same game. Keep the folder\n"
+            "'ChessAnalyzer' next to this one in the repository, or point\n"
+            "CHESS_ANALYZER_DIR at your copy, or from the repository root run:\n"
+            "  pip install -e ChessAnalyzer",
+            "This needs the sibling study exporter. From the repository root run:\n"
+            "  pip install -e Lichess-Study-to-PDF",
+            "pip install -e Lichess-Study-to-PDF",
+        )
+    return (
+        "Weakness Report reads its review rules from ChessAnalyzer, which is\n"
+        "installed alongside it and appears to be missing. Reinstall with:\n"
+        "  pip install --force-reinstall weakness-report",
+        "Board diagrams in the PDF need the study exporter. Run:\n"
+        '  pip install "weakness-report[diagrams]"\n'
+        "or install every app at once:\n"
+        "  pip install lichess-essentials",
+        'pip install "weakness-report[diagrams]"',
+    )
+
+
+#: Two full messages for errors a user has to act on, and a short one-line
+#: form of the diagrams hint for the status banner.
+INSTALL_HINT, STUDY_HINT, STUDY_SHORT = _hints()
 
 
 class FeatureUnavailable(RuntimeError):

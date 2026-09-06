@@ -13,6 +13,7 @@ from pathlib import Path
 
 from . import analysis, engine, export, sync
 from .bridge import FeatureUnavailable, status as bridge_status
+from . import bridge
 from .gitsync import GitSettings, GitSync
 from .lichess import LichessClient, LichessError, SCOPE_URL
 from .storage import (
@@ -94,7 +95,7 @@ def cmd_serve(args) -> int:
     _say(f"  repertoires  {data_dir}")
     _say(f"  engine       {state['stockfish'] or 'not found - eval bar disabled'}")
     if not state["sibling"]:
-        _say("  pdf export   unavailable (pip install -e Lichess-Study-to-PDF)")
+        _say(f"  pdf export   unavailable ({bridge.INSTALL_SHORT})")
     else:
         _say(f"  pdf export   ready{'' if state['latex'] else ' (book mode needs LaTeX)'}")
     _say(f"  open         http://{args.host}:{args.port}")

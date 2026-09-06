@@ -1,5 +1,12 @@
 # Weakness Report
 
+[![PyPI](https://img.shields.io/pypi/v/weakness-report?logo=pypi&logoColor=white)](https://pypi.org/project/weakness-report/)
+[![Python](https://img.shields.io/pypi/pyversions/weakness-report)](https://pypi.org/project/weakness-report/)
+[![Downloads](https://static.pepy.tech/badge/weakness-report)](https://pepy.tech/project/weakness-report)
+[![Downloads](https://static.pepy.tech/badge/weakness-report/month)](https://pepy.tech/project/weakness-report)
+[![License](https://img.shields.io/pypi/l/weakness-report)](LICENSE)
+
+
 Review your whole game history and find out what you are actually bad at.
 
 A single game review tells you what went wrong in that game. Four hundred of
@@ -16,9 +23,25 @@ cd Weakness-Report
 
 Then open <http://127.0.0.1:8781>.
 
-![The findings tab: overall figures across the top, then the kinds of position costing you most, each with the sample it rests on](docs/report.png)
+![The findings tab: overall figures across the top, then the kinds of position costing you most, each with the sample it rests on](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Weakness-Report/docs/report.png)
 
 ---
+
+## Install
+
+```bash
+pip install weakness-report
+weakness serve
+```
+
+`chess-game-analyzer` is a real dependency and pip installs it with this one:
+the review has to agree with that app. Board diagrams in the PDF are
+optional: `pip install "weakness-report[diagrams]"`.
+
+Or take all five at once with `pip install lichess-essentials`. Installed this
+way your files live in the usual per-user folder for your platform, and the
+app prints the path in its startup banner. To run it from a checkout instead,
+see [the repository README](https://github.com/spearb0lt/Lichess-Essentials/blob/main/README.md#setup-from-a-checkout).
 
 ## The number the whole thing rests on
 
@@ -210,7 +233,7 @@ Fourteen dimensions, and a move can be in several buckets of the same one.
 | **Colour, time control, opponent strength** | As White or Black, bullet through classical, and against players rated 100 points either side of you. |
 | **Move label, move number** | How the move was labelled, and ten-move bands, which sometimes shows a slump the phase split hides. |
 
-![Every slice as a table, each bucket against your own average, with the bar showing which side of it you are on](docs/slices.png)
+![Every slice as a table, each bucket against your own average, with the bar showing which side of it you are on](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Weakness-Report/docs/slices.png)
 
 Every table shows moves, games, ACPL, accuracy, blunders and the gap to your
 own average, so you can disagree with the ranking and read the numbers
@@ -247,7 +270,7 @@ The single moves that cost most across the whole history, at most two from any
 one game so that one collapse does not fill the page. Forced moves are
 excluded: there was nothing else to play.
 
-![The worst moves as a grid of diagrams, with the selected one shown large beside its opening, situation and the move the engine wanted](docs/moments.png)
+![The worst moves as a grid of diagrams, with the selected one shown large beside its opening, situation and the move the engine wanted](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Weakness-Report/docs/moments.png)
 
 ---
 
@@ -392,7 +415,7 @@ Same profile as the other four apps — FastAPI/Uvicorn needing a real
 container, not a serverless host. This one needs **two** siblings, so the
 Docker build context has to be the **repository root**.
 
-[`Dockerfile`](Dockerfile) lives here but must be built with the repo root as
+[`Dockerfile`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Weakness-Report/Dockerfile) lives here but must be built with the repo root as
 its context. Docker keeps "where is the Dockerfile" and "what can `COPY` see"
 separate, which is what Render's **Root Directory** and **Dockerfile Path**
 fields are for. It installs Stockfish via `apt-get` and installs ChessAnalyzer
@@ -430,7 +453,7 @@ redeploy, so the reviews — the expensive part — do not survive. Host it to
 
 ### Locking it behind a password
 
-[`server.py`](weakness_report/server.py) has an HTTP Basic Auth gate that only
+[`server.py`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Weakness-Report/weakness_report/server.py) has an HTTP Basic Auth gate that only
 activates when both `WEAKNESS_AUTH_USER` and `WEAKNESS_AUTH_PASS` are set, so
 local use is never asked for credentials. Do **not** set `LICHESS_TOKEN` on a
 public deployment: it would be shared by every visitor.
@@ -453,7 +476,7 @@ public deployment: it would be shared by every visitor.
 
 ## Licence
 
-MIT — see [LICENSE](../LICENSE). Chess piece artwork in the diagrams comes from
+MIT — see [LICENSE](https://github.com/spearb0lt/Lichess-Essentials/blob/main/LICENSE). Chess piece artwork in the diagrams comes from
 python-chess (Colin M.L. Burnett's Cburnett set, CC BY-SA 3.0); opening names
 come from [lichess-org/chess-openings](https://github.com/lichess-org/chess-openings)
 (CC0). The accuracy formula and move-label rules are ChessAnalyzer's, which

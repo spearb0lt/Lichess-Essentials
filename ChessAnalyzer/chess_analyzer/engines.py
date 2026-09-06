@@ -46,12 +46,14 @@ import chess
 import chess.engine
 import requests
 
+from . import paths
+
 USER_AGENT = "chess-analyzer/0.1"
 
 #: Where downloaded engines land. Beside the app, not in a cache directory:
 #: these are hundreds of megabytes and you should be able to find and delete
 #: them without knowing where your platform hides its caches.
-ENGINE_DIR = Path(__file__).resolve().parent.parent / "engines"
+ENGINE_DIR = paths.resolve(__file__, "engines", "ANALYZER_ENGINE_DIR")
 
 GITHUB_API = "https://api.github.com/repos"
 STOCKFISH_REPO = "official-stockfish/Stockfish"
@@ -174,12 +176,20 @@ def _search_dirs() -> list[Path]:
     repository tells you to put Stockfish there, so someone following its
     README already has one and should never be asked to download a second.
     """
-    root = Path(__file__).resolve().parent.parent.parent
-    return [
-        ENGINE_DIR,
-        root / "Lichess-Study-to-PDF" / "engine",
-        root / "engine",
-    ]
+    dirs = [ENGINE_DIR]
+    root = paths.source_root(__file__)
+    if root is not None:
+        # A checkout: the sibling app's folder is one level up from this one.
+        dirs += [
+            root.parent / "Lichess-Study-to-PDF" / "engine",
+            root.parent / "engine",
+            root / "engine",
+        ]
+    else:
+        # Installed from PyPI: no repository, but the sibling app keeps its
+        # engine in a per-user folder this can name directly.
+        dirs.append(paths.data_home("lichess-study-pdf") / "engine")
+    return dirs
 
 
 def discover() -> list[EngineSpec]:

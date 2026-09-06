@@ -1,5 +1,12 @@
 # Lichess Essentials
 
+[![PyPI](https://img.shields.io/pypi/v/lichess-essentials?logo=pypi&logoColor=white)](https://pypi.org/project/lichess-essentials/)
+[![Python](https://img.shields.io/pypi/pyversions/lichess-essentials)](https://pypi.org/project/lichess-essentials/)
+[![Downloads](https://static.pepy.tech/badge/lichess-essentials)](https://pepy.tech/project/lichess-essentials)
+[![Downloads](https://static.pepy.tech/badge/lichess-essentials/month)](https://pepy.tech/project/lichess-essentials)
+[![License](https://img.shields.io/pypi/l/lichess-essentials)](LICENSE)
+
+
 Tools that fix the things I keep running into as a long-time Lichess user.
 Built for my own use, open source in case they are useful to anyone else.
 
@@ -7,48 +14,122 @@ Built for my own use, open source in case they are useful to anyone else.
 
 | App | What it does |
 |---|---|
-| [Lichess-Study-to-PDF](Lichess-Study-to-PDF/) | Turns a study into a typeset chess book or a step-through PDF — every sideline, comment and annotation included — plus a browser interface with a live engine eval bar and a board you can play your own moves on. Imports private studies without a token. |
-| [ChessAnalyzer](ChessAnalyzer/) | Review any game with a local engine — from Lichess, from Chess.com, or from a PGN you paste. Accuracy and move labels on both the Lichess and a Chess.com-style scale, with the rules for every label written down and shown in the app. Eval graph, ranked engine lines, mouse-wheel stepping, and a live mode that follows a game while it is still being played — including Chess.com live games, which no documented API exposes. Or arrange the pieces by hand for a game happening in front of you, say who is to move, and get the evaluation. |
-| [Player-Prepper](Player-Prepper/) | Scout an opponent from their own games, on either site. What they play per colour, where their own results say they leak points, and — measured against your repertoire, a study or your own games — every position they steer into that you have no answer for, ranked by how many of their games would put you there. Its exploit tab crosses their habits with what the engine says you get, on an opportunity score whose factors you switch on and off. Playable board with a live eval bar, and it prints the lot as a prep sheet. |
-| [Weakness-Report](Weakness-Report/) | Review a few hundred of your own games and find out what you are actually bad at. Slices your whole history by the kind of position you were in — queenless middlegames, opposite-side castling, under thirty seconds, rook endings — and ranks each by how much it costs you *beyond your own average*, which is the difference between a true claim and a useful one. Prints as a document. |
-| [Repertoire-Creator](Repertoire-Creator/) | Build an opening repertoire locally — play or type the lines, annotate them, live eval bar and ranked engine suggestions — then publish it to Lichess as a study, drill yourself on it, or export it as a PDF. Knows which side you play, so it finds the positions you have no answer for. Its universal mode drops the chapters entirely: record sequences, and everything you have written down becomes one book keyed by position that tells you your own move as you play, or says *gap*. Saves to disk as you type and can commit and push itself. |
+| [Lichess-Study-to-PDF](https://github.com/spearb0lt/Lichess-Essentials/tree/main/Lichess-Study-to-PDF) | Turns a study into a typeset chess book or a step-through PDF — every sideline, comment and annotation included — plus a browser interface with a live engine eval bar and a board you can play your own moves on. Imports private studies without a token. |
+| [ChessAnalyzer](https://github.com/spearb0lt/Lichess-Essentials/tree/main/ChessAnalyzer) | Review any game with a local engine — from Lichess, from Chess.com, or from a PGN you paste. Accuracy and move labels on both the Lichess and a Chess.com-style scale, with the rules for every label written down and shown in the app. Eval graph, ranked engine lines, mouse-wheel stepping, and a live mode that follows a game while it is still being played — including Chess.com live games, which no documented API exposes. Or arrange the pieces by hand for a game happening in front of you, say who is to move, and get the evaluation. |
+| [Player-Prepper](https://github.com/spearb0lt/Lichess-Essentials/tree/main/Player-Prepper) | Scout an opponent from their own games, on either site. What they play per colour, where their own results say they leak points, and — measured against your repertoire, a study or your own games — every position they steer into that you have no answer for, ranked by how many of their games would put you there. Its exploit tab crosses their habits with what the engine says you get, on an opportunity score whose factors you switch on and off. Playable board with a live eval bar, and it prints the lot as a prep sheet. |
+| [Weakness-Report](https://github.com/spearb0lt/Lichess-Essentials/tree/main/Weakness-Report) | Review a few hundred of your own games and find out what you are actually bad at. Slices your whole history by the kind of position you were in — queenless middlegames, opposite-side castling, under thirty seconds, rook endings — and ranks each by how much it costs you *beyond your own average*, which is the difference between a true claim and a useful one. Prints as a document. |
+| [Repertoire-Creator](https://github.com/spearb0lt/Lichess-Essentials/tree/main/Repertoire-Creator) | Build an opening repertoire locally — play or type the lines, annotate them, live eval bar and ranked engine suggestions — then publish it to Lichess as a study, drill yourself on it, or export it as a PDF. Knows which side you play, so it finds the positions you have no answer for. Its universal mode drops the chapters entirely: record sequences, and everything you have written down becomes one book keyed by position that tells you your own move as you play, or says *gap*. Saves to disk as you type and can commit and push itself. |
 
 ### What they look like
 
-**[Lichess-Study-to-PDF](Lichess-Study-to-PDF/)** — a study open in the browser:
+**[Lichess-Study-to-PDF](https://github.com/spearb0lt/Lichess-Essentials/tree/main/Lichess-Study-to-PDF)** — a study open in the browser:
 chapters down the left, a live engine eval beside the board, and every sideline,
 comment and annotation in the notation panel.
 
-![Lichess Study to PDF: a study open in the browser, with the chapter list, the board, a live eval bar and the full notation panel](Lichess-Study-to-PDF/docs/study.png)
+![Lichess Study to PDF: a study open in the browser, with the chapter list, the board, a live eval bar and the full notation panel](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Lichess-Study-to-PDF/docs/study.png)
 
-**[ChessAnalyzer](ChessAnalyzer/)** — a finished review: the engine's ranked lines
+**[ChessAnalyzer](https://github.com/spearb0lt/Lichess-Essentials/tree/main/ChessAnalyzer)** — a finished review: the engine's ranked lines
 above the board, the move's label on its own square with the engine's preferred move
 drawn beside it, the eval graph underneath, and the report on the right.
 
-![Chess Analyzer: a reviewed game showing ranked engine lines, a miss badge on the board, the eval graph and the accuracy report](ChessAnalyzer/docs/review.png)
+![Chess Analyzer: a reviewed game showing ranked engine lines, a miss badge on the board, the eval graph and the accuracy report](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/ChessAnalyzer/docs/review.png)
 
-**[Player-Prepper](Player-Prepper/)** — a scout of a real opponent: their
+**[Player-Prepper](https://github.com/spearb0lt/Lichess-Essentials/tree/main/Player-Prepper)** — a scout of a real opponent: their
 record and your coverage across the top, the gaps ranked by how many of their
 games reach each one, and the selected gap with the engine's suggestion on it.
 
-![Player Prepper: a scouting report showing coverage stats, a ranked list of gap positions and the selected position with an engine suggestion](Player-Prepper/docs/report.png)
+![Player Prepper: a scouting report showing coverage stats, a ranked list of gap positions and the selected position with an engine suggestion](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Player-Prepper/docs/report.png)
 
-**[Weakness-Report](Weakness-Report/)** — sixty games reviewed and sliced:
+**[Weakness-Report](https://github.com/spearb0lt/Lichess-Essentials/tree/main/Weakness-Report)** — sixty games reviewed and sliced:
 the overall figures, then the kinds of position costing the most, each with the
 sample it rests on.
 
-![Weakness Report: summary tiles across the top and a ranked list of findings, each showing pawns per game lost beyond the player's own average](Weakness-Report/docs/report.png)
+![Weakness Report: summary tiles across the top and a ranked list of findings, each showing pawns per game lost beyond the player's own average](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Weakness-Report/docs/report.png)
 
-**[Repertoire-Creator](Repertoire-Creator/)** — a repertoire being written: the move
+**[Repertoire-Creator](https://github.com/spearb0lt/Lichess-Essentials/tree/main/Repertoire-Creator)** — a repertoire being written: the move
 tree on the right, ranked engine suggestions under the board with a tick against the
 moves you already have, and the gap count in the tab bar.
 
-![Repertoire Creator: the Ruy Lopez repertoire open, with the move tree, engine suggestions and gap count](Repertoire-Creator/docs/editor.png)
+![Repertoire Creator: the Ruy Lopez repertoire open, with the move tree, engine suggestions and gap count](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Repertoire-Creator/docs/editor.png)
 
 
-## Setup, once
+## Install with pip
 
-All apps share one virtualenv at the repository root:
+If you only want to *use* the apps, this is the whole thing:
+
+```bash
+pip install lichess-essentials
+```
+
+That installs all five and gives you five commands — `chess-analyzer`,
+`lichess-study-pdf`, `repertoire`, `prepper` and `weakness`. Each takes
+`serve` to open its web interface, or works from the command line.
+
+They are separate packages, so you can take only the one you want:
+
+```bash
+pip install chess-game-analyzer     # review any game with a local engine
+pip install lichess-study-to-pdf    # a study as a PDF you can step through
+pip install repertoire-creator      # build a repertoire, publish it as a study
+pip install player-prepper          # scout an opponent
+pip install weakness-report         # what you are actually bad at
+```
+
+A few features are one app borrowing another, and those are optional extras
+rather than a dependency everyone pays for. Each app says which command to run
+if you ask for a feature it has not got:
+
+| Want | Install |
+|---|---|
+| PDF export from Repertoire-Creator | `pip install "repertoire-creator[pdf]"` |
+| Engine suggestions, prep sheets and private studies in Player-Prepper | `pip install "player-prepper[prep]"` |
+| Board diagrams in a Weakness-Report PDF | `pip install "weakness-report[diagrams]"` |
+| Lichess cloud-eval fallback in ChessAnalyzer | `pip install "chess-game-analyzer[cloud]"` |
+
+`weakness-report` is the exception: it depends on `chess-game-analyzer` outright, so
+pip installs that for you. A weakness report *is* an aggregation of that app's
+review, and the two are meant to agree about the same game.
+
+**Where your files go.** Installed from pip there is no repository to put them
+beside, so each app uses the normal per-user folder for your platform —
+`%LOCALAPPDATA%\weakness-report\history` on Windows,
+`~/.local/share/weakness-report/history` on Linux,
+`~/Library/Application Support/...` on macOS. Every app prints its own path in
+the banner when it starts. Working from a checkout instead, files stay in the
+repository exactly as the rest of this README describes.
+
+An engine is still your own to supply: install Stockfish from your package
+manager, put it on `PATH`, or point `STOCKFISH_PATH` at it. ChessAnalyzer can
+also download one for you from its Engines tab.
+
+---
+
+### Download numbers
+
+The badges above are live. Behind them:
+
+| Package | PyPI | Daily / by installer | Totals |
+|---|---|---|---|
+| lichess-essentials | [pypi](https://pypi.org/project/lichess-essentials/) | [pypistats](https://pypistats.org/packages/lichess-essentials) | [pepy](https://pepy.tech/project/lichess-essentials) |
+| chess-game-analyzer | [pypi](https://pypi.org/project/chess-game-analyzer/) | [pypistats](https://pypistats.org/packages/chess-game-analyzer) | [pepy](https://pepy.tech/project/chess-game-analyzer) |
+| lichess-study-to-pdf | [pypi](https://pypi.org/project/lichess-study-to-pdf/) | [pypistats](https://pypistats.org/packages/lichess-study-to-pdf) | [pepy](https://pepy.tech/project/lichess-study-to-pdf) |
+| repertoire-creator | [pypi](https://pypi.org/project/repertoire-creator/) | [pypistats](https://pypistats.org/packages/repertoire-creator) | [pepy](https://pepy.tech/project/repertoire-creator) |
+| player-prepper | [pypi](https://pypi.org/project/player-prepper/) | [pypistats](https://pypistats.org/packages/player-prepper) | [pepy](https://pepy.tech/project/player-prepper) |
+| weakness-report | [pypi](https://pypi.org/project/weakness-report/) | [pypistats](https://pypistats.org/packages/weakness-report) | [pepy](https://pepy.tech/project/weakness-report) |
+
+Nothing needs setting up for any of that — PyPI publishes its download logs
+and both sites read them. Figures appear about a day after the first release.
+
+Worth knowing before reading anything into them: these counts include CI
+runs, mirrors and bots as well as people. `pypistats` can break a package
+down by installer, which is the honest way to look — traffic whose installer
+is `pip` from varied Python versions is closer to real use than a flat line
+that only ever arrives from one.
+
+## Setup from a checkout
+
+This is the developer path, and what the Docker and hosting setups
+build from. All apps share one virtualenv at the repository root:
 
 ```powershell
 # Windows PowerShell
@@ -143,7 +224,7 @@ found them.
 
 Publishing a repertoire to Lichess additionally needs an API token with the
 `study:write` scope — see
-[the Repertoire-Creator README](Repertoire-Creator/README.md#publishing-to-lichess).
+[the Repertoire-Creator README](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Repertoire-Creator/README.md#publishing-to-lichess).
 
 Repertoire-Creator writes into `Repertoire-Creator/repertoires/`, which is
 inside this repository, and it commits and pushes that folder for you by
@@ -152,11 +233,11 @@ publishes your opening preparation too — turn pushing off with the `git` pill 
 the app, or point `REPERTOIRE_DIR` somewhere private.
 
 Full instructions, the CLI reference and troubleshooting live in each app's own
-README: [Lichess-Study-to-PDF](Lichess-Study-to-PDF/README.md),
-[Repertoire-Creator](Repertoire-Creator/README.md),
-[ChessAnalyzer](ChessAnalyzer/README.md),
-[Player-Prepper](Player-Prepper/README.md),
-[Weakness-Report](Weakness-Report/README.md).
+README: [Lichess-Study-to-PDF](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Lichess-Study-to-PDF/README.md),
+[Repertoire-Creator](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Repertoire-Creator/README.md),
+[ChessAnalyzer](https://github.com/spearb0lt/Lichess-Essentials/blob/main/ChessAnalyzer/README.md),
+[Player-Prepper](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Player-Prepper/README.md),
+[Weakness-Report](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Weakness-Report/README.md).
 
 The apps read each other's folders and never write to them, so any of them can
 run beside any other. Player-Prepper reads `Repertoire-Creator/repertoires/`;
@@ -167,4 +248,4 @@ about how you play, are not things to publish by accident.
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/spearb0lt/Lichess-Essentials/blob/main/LICENSE).

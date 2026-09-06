@@ -1,5 +1,12 @@
 # Chess Analyzer
 
+[![PyPI](https://img.shields.io/pypi/v/chess-game-analyzer?logo=pypi&logoColor=white)](https://pypi.org/project/chess-game-analyzer/)
+[![Python](https://img.shields.io/pypi/pyversions/chess-game-analyzer)](https://pypi.org/project/chess-game-analyzer/)
+[![Downloads](https://static.pepy.tech/badge/chess-game-analyzer)](https://pepy.tech/project/chess-game-analyzer)
+[![Downloads](https://static.pepy.tech/badge/chess-game-analyzer/month)](https://pepy.tech/project/chess-game-analyzer)
+[![License](https://img.shields.io/pypi/l/chess-game-analyzer)](LICENSE)
+
+
 Review any chess game with an engine on your own machine — a Lichess game, a
 Chess.com game, a PGN you pasted, or a position you typed. Accuracy, move
 labels, an eval graph, the engine's best line at every point, and a live mode
@@ -15,13 +22,27 @@ cd ChessAnalyzer
 
 Then open <http://127.0.0.1:8779>.
 
-![A finished review of a Lichess game: three ranked engine lines above the board, a miss badge on the move played with a green arrow showing the engine's choice, the eval graph with opening, middlegame and endgame marked underneath, and the accuracy report on the right](docs/review.png)
+![A finished review of a Lichess game: three ranked engine lines above the board, a miss badge on the move played with a green arrow showing the engine's choice, the eval graph with opening, middlegame and endgame marked underneath, and the accuracy report on the right](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/ChessAnalyzer/docs/review.png)
 
 *Above: `54... h2`, the move this review calls the game's biggest turning point.
 The strip over the board says `from the review`, so those three lines cost
 nothing — the review already analysed this position to depth 44.*
 
 ---
+
+## Install
+
+```bash
+pip install chess-game-analyzer
+chess-analyzer serve
+```
+
+**Optional.** Lichess cloud-eval fallback: `pip install "chess-game-analyzer[cloud]"`.
+
+Or take all five at once with `pip install lichess-essentials`. Installed this
+way your files live in the usual per-user folder for your platform, and the
+app prints the path in its startup banner. To run it from a checkout instead,
+see [the repository README](https://github.com/spearb0lt/Lichess-Essentials/blob/main/README.md#setup-from-a-checkout).
 
 ## Getting a game in
 
@@ -176,7 +197,7 @@ removes it, and right-clicking any square clears it. **From the board** copies
 whatever position you are already looking at, which beats building from empty
 when you only need to move two pieces.
 
-![The board editor: the board outlined in green with a piece palette beside it, who is to move, the castling row, the FEN, and a line confirming the position is legal](docs/setup.png)
+![The board editor: the board outlined in green with a piece palette beside it, who is to move, the castling row, the FEN, and a line confirming the position is legal](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/ChessAnalyzer/docs/setup.png)
 
 *The castling row in that shot reads **none possible** on its own — no king and
 rook are on their home squares in this position, so there is nothing to offer
@@ -222,7 +243,7 @@ to Paste PGN, which always works.
 
 That endpoint returns moves in **TCN**, Chess.com's own two-characters-per-ply
 encoding, which nothing in python-chess speaks. The decoder in
-[`tcn.py`](chess_analyzer/tcn.py) is verified against 40 real games that
+[`tcn.py`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/ChessAnalyzer/chess_analyzer/tcn.py) is verified against 40 real games that
 Chess.com shipped as *both* TCN and PGN — every move and every final position
 matches, promotions and en passant included. The fixture is in the repository
 so the check runs with no network.
@@ -351,18 +372,18 @@ and there is a test that keeps that sign honest.
 ## Hosting it for free
 
 Same profile as
-[the other two apps](../Lichess-Study-to-PDF/README.md#hosting-it-for-free) —
+[the other two apps](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Lichess-Study-to-PDF/README.md#hosting-it-for-free) —
 FastAPI/Uvicorn needing a real container, not a serverless host. Unlike
 Repertoire-Creator, this app doesn't actually import the sibling package
 anywhere in its code despite the `cloud` extra in `pyproject.toml` (that's an
-unused hook for later), so [`Dockerfile`](Dockerfile) is self-contained in
+unused hook for later), so [`Dockerfile`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/ChessAnalyzer/Dockerfile) is self-contained in
 this folder — no repo-root build context needed.
 
 It installs Stockfish via `apt-get` rather than letting the app's own
 GitHub-releases downloader (`chess_analyzer/engines.py`) fetch one at
 runtime — simpler, and `apt` already picks the build matching the container's
 actual CPU. `engines.py` checks `$STOCKFISH_PATH` directly
-([engines.py:214](chess_analyzer/engines.py#L214)), which the Dockerfile
+([engines.py:214](https://github.com/spearb0lt/Lichess-Essentials/blob/main/ChessAnalyzer/chess_analyzer/engines.py#L214)), which the Dockerfile
 sets, so it shows up in the engine picker as "Engine from $STOCKFISH_PATH"
 with nothing else to configure. Lc0/Maia are left out — they're optional, and
 downloadable from the same picker at runtime if you want them.
@@ -411,7 +432,7 @@ Spaces are their own separate git repo, so:
 
 ### Locking it behind a password
 
-[`server.py`](chess_analyzer/server.py) already has an HTTP Basic Auth gate
+[`server.py`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/ChessAnalyzer/chess_analyzer/server.py) already has an HTTP Basic Auth gate
 that only activates when both `ANALYZER_AUTH_USER` and `ANALYZER_AUTH_PASS`
 are set — leave them unset and local `chess-analyzer serve` is unaffected.
 Set both as secrets on whichever host you use and every route, API included,
@@ -428,4 +449,4 @@ applies to the other two apps' `LICHESS_TOKEN` doesn't apply here.
 
 ## Licence
 
-MIT — see [LICENSE](../LICENSE).
+MIT — see [LICENSE](https://github.com/spearb0lt/Lichess-Essentials/blob/main/LICENSE).

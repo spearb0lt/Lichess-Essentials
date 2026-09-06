@@ -34,6 +34,8 @@ import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
+from . import paths
+
 GAMES_DIR = "games"
 SCOUTS_DIR = "scouts"
 BOOKS_DIR = "books"
@@ -51,11 +53,8 @@ def now_iso() -> str:
 
 
 def default_data_dir() -> Path:
-    """The prep folder: env override, else next to the package."""
-    env = os.environ.get("PREPPER_DIR")
-    if env:
-        return Path(env).expanduser().resolve()
-    return (Path(__file__).resolve().parent.parent / "prep").resolve()
+    """The prep folder: ``$PREPPER_DIR``, else beside the package or per-user."""
+    return paths.resolve(__file__, "prep", "PREPPER_DIR")
 
 
 def slugify(text: str, fallback: str = "item") -> str:

@@ -1,22 +1,32 @@
+# The whole set in one command.
+#
+# This package contains no code. It exists so that "pip install
+# lichess-essentials" installs all five apps, and so there is one download
+# figure for the collection as well as five for its parts.
+#
+# Installing every app is also what makes every optional feature work at
+# once: ChessAnalyzer's cloud-eval fallback, Repertoire Creator's PDF export
+# and Player Prepper's engine suggestions all look for the study exporter,
+# and it is right here.
+
 [build-system]
 requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "player-prepper"
+name = "lichess-essentials"
 version = "0.1.0"
-description = "Scout a chess opponent from their own games, and measure your preparation against them."
+description = "All five Lichess Essentials apps: game review, study PDFs, repertoires, opponent prep and weakness reports."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Shubhro Dev", email = "shubhro2004@gmail.com" }]
-keywords = ["chess", "lichess", "opponent", "scouting", "preparation", "openings"]
+keywords = ["chess", "lichess", "pgn", "stockfish", "openings", "analysis"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Environment :: Web Environment",
-    "Framework :: FastAPI",
     "Intended Audience :: End Users/Desktop",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -27,31 +37,18 @@ classifiers = [
     "Topic :: Games/Entertainment :: Board Games",
 ]
 dependencies = [
-    "chess>=1.11",
-    "requests>=2.31",
-    "fastapi>=0.110",
-    "uvicorn[standard]>=0.27",
-    "pydantic>=2.0",
+    "chess-game-analyzer>=0.1.0",
+    "lichess-study-to-pdf>=0.1.0",
+    "player-prepper>=0.1.0",
+    "repertoire-creator>=0.1.0",
+    "weakness-report>=0.1.0",
 ]
-
-[project.optional-dependencies]
-# Engine suggestions for gaps, PDF export, and reading a private study as your
-# book all come from the sibling app rather than a second copy of its code:
-#   pip install "player-prepper[prep]"
-prep = ["lichess-study-to-pdf>=0.1.0"]
-dev = ["pytest>=8.0"]
-
-[project.scripts]
-prepper = "player_prepper.cli:main"
-
-[tool.setuptools.packages.find]
-include = ["player_prepper*"]
-
-[tool.setuptools.package-data]
-player_prepper = ["web/*"]
 
 [project.urls]
 Homepage = "https://github.com/spearb0lt/Lichess-Essentials"
 Repository = "https://github.com/spearb0lt/Lichess-Essentials"
 Issues = "https://github.com/spearb0lt/Lichess-Essentials/issues"
-Documentation = "https://github.com/spearb0lt/Lichess-Essentials/blob/main/Player-Prepper/README.md"
+
+# No code of its own, so nothing to discover.
+[tool.setuptools]
+packages = []

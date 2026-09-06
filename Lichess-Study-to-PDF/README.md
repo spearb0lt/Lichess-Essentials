@@ -1,5 +1,12 @@
 # Lichess Study to PDF
 
+[![PyPI](https://img.shields.io/pypi/v/lichess-study-to-pdf?logo=pypi&logoColor=white)](https://pypi.org/project/lichess-study-to-pdf/)
+[![Python](https://img.shields.io/pypi/pyversions/lichess-study-to-pdf)](https://pypi.org/project/lichess-study-to-pdf/)
+[![Downloads](https://static.pepy.tech/badge/lichess-study-to-pdf)](https://pepy.tech/project/lichess-study-to-pdf)
+[![Downloads](https://static.pepy.tech/badge/lichess-study-to-pdf/month)](https://pepy.tech/project/lichess-study-to-pdf)
+[![License](https://img.shields.io/pypi/l/lichess-study-to-pdf)](LICENSE)
+
+
 Turn a Lichess study into a PDF worth reading, plus a browser interface for
 working through it first.
 
@@ -7,9 +14,21 @@ Everything in the study makes it into the export: main line, sidelines nested
 to any depth, comments, NAG symbols (`!`, `?!`, `□`), and the coloured square
 markers and arrows Lichess stores in the PGN.
 
-![The Fried Liver Attack study open in the browser: the chapter list on the left, the board with a live eval bar, the notation panel with comments and sideline colours, and the eval graph underneath](docs/study.png)
+![The Fried Liver Attack study open in the browser: the chapter list on the left, the board with a live eval bar, the notation panel with comments and sideline colours, and the eval graph underneath](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Lichess-Study-to-PDF/docs/study.png)
 
 ---
+
+## Install
+
+```bash
+pip install lichess-study-to-pdf
+lichess-study-pdf serve
+```
+
+Or take all five at once with `pip install lichess-essentials`. Installed this
+way your files live in the usual per-user folder for your platform, and the
+app prints the path in its startup banner. To run it from a checkout instead,
+see [the repository README](https://github.com/spearb0lt/Lichess-Essentials/blob/main/README.md#setup-from-a-checkout).
 
 ## Running the app
 
@@ -95,14 +114,14 @@ LaTeX means the book mode is greyed out. Neither stops the app running.
    Pick up a piece to play your own moves from that position.
 4. **Export PDF** on the bottom left, choose a style, **Build PDF**.
 
-![The Export to PDF dialog: a style picker, the diagram policy, a chapter subset, and tick boxes for the notation section, stepping pages, evaluation bars and landscape pages](docs/export.png)
+![The Export to PDF dialog: a style picker, the diagram policy, a chapter subset, and tick boxes for the notation section, stepping pages, evaluation bars and landscape pages](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Lichess-Study-to-PDF/docs/export.png)
 
 Handy: `http://127.0.0.1:8777/?url=<study-url>` loads a study straight away,
 so you can bookmark a study you open often.
 
 ### Your studies list
 
-![The home page: My studies, one card per study, grouped under the section headings from studies.txt](docs/home.png)
+![The home page: My studies, one card per study, grouped under the section headings from studies.txt](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Lichess-Study-to-PDF/docs/home.png)
 
 The home page is built from **`studies.txt`**, in this folder. One study per
 line:
@@ -244,7 +263,7 @@ keeps nesting and identity readable in a greyscale print or for a colour-blind
 reader. Grid pages carry a legend of the sidelines shown on them along the
 footer.
 
-![A grid page carrying two sidelines, s2 in green and s4 in magenta: each is a bar down the left edge of its boards, a wash behind them and the ink of their moves, its number printed in every cell, and both named in the legend along the footer](docs/pdf-grid-sidelines.png)
+![A grid page carrying two sidelines, s2 in green and s4 in magenta: each is a bar down the left edge of its boards, a wash behind them and the ink of their moves, its number printed in every cell, and both named in the legend along the footer](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Lichess-Study-to-PDF/docs/pdf-grid-sidelines.png)
 
 ### `--mode grid` (default) — twelve boards to a page
 
@@ -253,7 +272,7 @@ reading order, each with its move, evaluation and comment underneath. Same
 coverage as the slideshow with a twelfth of the diagram pages — measured on a
 237-position study, 20 pages instead of 237.
 
-![A grid page: twelve boards in reading order, each with its own eval bar, and its move, evaluation and comment underneath -- with the study's own arrows and circles drawn on the diagrams](docs/pdf-grid.png)
+![A grid page: twelve boards in reading order, each with its own eval bar, and its move, evaluation and comment underneath -- with the study's own arrows and circles drawn on the diagrams](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Lichess-Study-to-PDF/docs/pdf-grid.png)
 
 Comments are trimmed to two lines in a grid cell; the notation section, which
 is on by default, still carries every comment in full.
@@ -285,7 +304,7 @@ study's own annotations, and optional `[+0.42]` evaluations beside each move.
 A 13-chapter study lands in about 16 pages. This is the mode to use for
 reading and printing.
 
-![A book page: two columns of justified figurine notation with bracketed evaluations, and printed-book diagrams carrying the study's arrows and a side-to-move marker](docs/pdf-book.png)
+![A book page: two columns of justified figurine notation with bracketed evaluations, and printed-book diagrams carrying the study's arrows and a side-to-move marker](https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Lichess-Study-to-PDF/docs/pdf-book.png)
 
 Needs `pdflatex` (MiKTeX or TeX Live) with `xskak`, `chessboard`, `skak`.
 Without it the mode is disabled in the UI and the CLI says so.
@@ -403,7 +422,7 @@ lichess-study-pdf engine-info
 
 This is a plain FastAPI/Uvicorn app with one runtime dependency worth caring
 about: Stockfish, invoked as a subprocess and kept warm for the life of the
-process ([server.py](lichess_study_pdf/server.py)). That rules out anything
+process ([server.py](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Lichess-Study-to-PDF/lichess_study_pdf/server.py)). That rules out anything
 serverless (Vercel, AWS Lambda-style hosts) — you need something that runs a
 real, long-lived container. Two that do it for free:
 
@@ -413,7 +432,7 @@ real, long-lived container. Two that do it for free:
 | Runtime | Docker | Docker |
 | Idle behaviour | Sleeps, wakes on the next visit | Spins down after ~15 min idle; cold start on the next request |
 
-[`Dockerfile`](Dockerfile) in this folder installs Stockfish via `apt-get`
+[`Dockerfile`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Lichess-Study-to-PDF/Dockerfile) in this folder installs Stockfish via `apt-get`
 (Debian's package, not a manual binary download) and deliberately skips
 LaTeX — a full texlive install is several GB and not worth it unless you
 specifically want book mode. It sets `STOCKFISH_PATH` to the apt package's
@@ -454,7 +473,7 @@ Spaces are their own separate git repo (not this GitHub repo), so:
 - There is no password wall here by default — anyone with the link can use
   the tool (not access your Lichess account, just use the app). If you want
   one, the sibling app has it wired up — see
-  [Repertoire Creator's hosting section](../Repertoire-Creator/README.md#hosting-it-for-free)
+  [Repertoire Creator's hosting section](https://github.com/spearb0lt/Lichess-Essentials/blob/main/Repertoire-Creator/README.md#hosting-it-for-free)
   for the pattern; it is not implemented in this app.
 
 ---

@@ -23,6 +23,7 @@ from .pipeline import load_games, run_exploit, run_scout
 from .exploit import DEFAULT_LIMIT, rank
 from .scout import DEFAULT_MIN_GAMES, pretty_line
 from .store import Store, StoreError, default_data_dir, player_key
+from . import bridge
 from .tree import DEFAULT_MAX_PLY
 
 BANNER = "Player Prepper"
@@ -102,7 +103,7 @@ def cmd_serve(args) -> int:
     _say(f"  repertoires  {default_repertoire_dir()}")
     _say(f"  engine       {state['stockfish'] or 'not found - gaps get no suggestion'}")
     if not state["sibling"]:
-        _say("  pdf export   unavailable (pip install -e Lichess-Study-to-PDF)")
+        _say(f"  pdf export   unavailable ({bridge.INSTALL_SHORT})")
     else:
         _say(f"  pdf export   ready{'' if state['latex'] else ' (book mode needs LaTeX)'}")
     _say(f"  openings     {'named' if openings.available() else 'dataset not fetched yet'}")

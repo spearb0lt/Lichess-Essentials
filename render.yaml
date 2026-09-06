@@ -1,0 +1,111 @@
+# All five apps as free Render web services, from this one repo -- no extra
+# repos anywhere. Render's dockerContext/dockerfilePath is the "pick a folder"
+# feature the whole hosting hunt was originally after.
+#
+# TO USE: Render dashboard -> New -> Blueprint -> pick this repo. Render reads
+# this file and creates every service below.
+#
+# WARNING, read before you click: a Blueprint CREATES services. The
+# Lichess-Study-to-PDF service you already deployed by hand is a separate
+# thing Render will not adopt, so you would end up with two of it. Either
+# delete the old one after this comes up green, or comment that service out
+# below and leave your existing deployment alone.
+#
+# Two deliberate omissions, both load-bearing:
+#
+#   * No healthCheckPath. Every app's password gate is HTTP middleware that
+#     runs before routing (e.g. player_prepper/server.py), so once
+#     *_AUTH_USER / *_AUTH_PASS are set, /api/health answers 401 like
+#     everything else -- and Render reads a 401 health check as a failed
+#     deploy. Without the key, Render just checks the port is listening,
+#     which is what we want here.
+#
+#   * No rootDir. Render's docs say dockerfilePath/dockerContext stay
+#     relative to the repo root even when rootDir is set, but three of these
+#     services genuinely need the repo root as their build context anyway.
+#     Leaving it out costs a rebuild of all five on every push and removes
+#     any doubt about how the paths resolve. If that gets annoying, add
+#     `rootDir: ./ChessAnalyzer` to the two self-contained services only.
+
+services:
+
+  # ---- self-contained: Dockerfile does `COPY . .` from its own folder ----
+
+  - name: lichess-study-to-pdf
+    type: web
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: ./Lichess-Study-to-PDF
+    dockerfilePath: ./Lichess-Study-to-PDF/Dockerfile
+    autoDeployTrigger: commit
+    # No auth vars: this app has no password gate (see its README).
+    # Do NOT add LICHESS_TOKEN here -- on a public URL it would be shared
+    # with every visitor. Paste a token into the UI per session instead.
+
+  - name: chess-analyzer
+    type: web
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: ./ChessAnalyzer
+    dockerfilePath: ./ChessAnalyzer/Dockerfile
+    autoDeployTrigger: commit
+    envVars:
+      # sync: false means Render prompts you for the value and stores it as a
+      # secret, rather than it living in this file in a public repo.
+      - key: ANALYZER_AUTH_USER
+        sync: false
+      - key: ANALYZER_AUTH_PASS
+        sync: false
+
+  # ---- build context is the REPO ROOT: these COPY from sibling folders ----
+
+  - name: player-prepper
+    type: web
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: .
+    dockerfilePath: ./Player-Prepper/Dockerfile
+    autoDeployTrigger: commit
+    envVars:
+      - key: PREPPER_AUTH_USER
+        sync: false
+      - key: PREPPER_AUTH_PASS
+        sync: false
+
+  - name: repertoire-creator
+    type: web
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: .
+    dockerfilePath: ./Repertoire-Creator/Dockerfile
+    autoDeployTrigger: commit
+    envVars:
+      - key: REPERTOIRE_AUTH_USER
+        sync: false
+      - key: REPERTOIRE_AUTH_PASS
+        sync: false
+      # Free instances have no persistent disk, so without a data repo every
+      # restart wipes your repertoires. entrypoint.sh wires gitsync to these;
+      # leave them blank to knowingly run ephemeral.
+      - key: REPERTOIRE_GIT_REMOTE_URL
+        sync: false
+      - key: REPERTOIRE_GIT_BRANCH
+        value: main
+
+  - name: weakness-report
+    type: web
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerContext: .
+    dockerfilePath: ./Weakness-Report/Dockerfile
+    autoDeployTrigger: commit
+    envVars:
+      - key: WEAKNESS_AUTH_USER
+        sync: false
+      - key: WEAKNESS_AUTH_PASS
+        sync: false

@@ -38,11 +38,14 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import paths
+
 import chess
 import chess.pgn
 import requests
 
 from .bridge import optional
+from . import bridge
 from .fetch import USER_AGENT, FetchError, fetch_games
 
 #: Preparation past here is not preparation, it is a game.  Everything this
@@ -184,8 +187,11 @@ def default_repertoire_dir() -> Path:
     env = os.environ.get("REPERTOIRE_DIR")
     if env:
         return Path(env).expanduser().resolve()
-    root = Path(__file__).resolve().parent.parent.parent
-    return (root / "Repertoire-Creator" / "repertoires").resolve()
+    root = paths.source_root(__file__)
+    if root is not None:
+        return (root.parent / "Repertoire-Creator" / "repertoires").resolve()
+    # Installed from PyPI: read the sibling app's per-user folder instead.
+    return (paths.data_home("repertoire-creator") / "repertoires").resolve()
 
 
 def list_repertoires(folder: Path | None = None) -> list:
@@ -284,7 +290,7 @@ def fetch_study_pgn(url: str, token: str | None = None) -> str:
         raise BookError(
             "That study is private. Install the sibling exporter to read it "
             "without a token:\n"
-            "  pip install -e Lichess-Study-to-PDF\n"
+            f"  {bridge.INSTALL_SHORT}\n"
             "or supply a token with the study:read scope.")
     if response.status_code == 404:
         raise BookError(f"Lichess has no study {study_id}.")

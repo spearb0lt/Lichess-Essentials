@@ -1,0 +1,62 @@
+# One subdomain per app, each with automatic Let's Encrypt HTTPS.
+#
+# Why subdomains rather than /analyzer, /prepper, ... on one hostname: every
+# frontend in this repo asks for its assets and API by absolute path --
+# `<script src="/static/app.js">` and `fetch("/api/...")`. Behind a path
+# prefix those all resolve to the wrong place and the page loads blank. A
+# subdomain keeps each app at "/" where its own code expects to be, with no
+# changes to any app.
+#
+# HTTPS matters here specifically: these apps take a Lichess API token pasted
+# into the browser. Over plain HTTP that token crosses the network in clear.
+#
+# DOMAIN and ACME_EMAIL come from .env -- see .env.example.
+
+{
+	email {$ACME_EMAIL}
+}
+
+study.{$DOMAIN} {
+	reverse_proxy study-to-pdf:7860
+}
+
+analyzer.{$DOMAIN} {
+	reverse_proxy chess-analyzer:7860
+}
+
+prepper.{$DOMAIN} {
+	reverse_proxy player-prepper:7860
+}
+
+repertoire.{$DOMAIN} {
+	reverse_proxy repertoire-creator:7860
+}
+
+weakness.{$DOMAIN} {
+	reverse_proxy weakness-report:7860
+}
+
+# ---------------------------------------------------------------------------
+# No domain name? Comment out everything above and uncomment this block. It
+# serves the five on ports 8001-8005 over plain HTTP at the VM's IP, with no
+# certificate. Then in docker-compose.yml add matching `ports:` entries to
+# each app, and open those ports in the Oracle security list.
+#
+# Understand the trade: without TLS, a Lichess token typed into any of these
+# pages travels in clear text. Treat it as a temporary state, not a setup.
+#
+# :8001 {
+# 	reverse_proxy study-to-pdf:7860
+# }
+# :8002 {
+# 	reverse_proxy chess-analyzer:7860
+# }
+# :8003 {
+# 	reverse_proxy player-prepper:7860
+# }
+# :8004 {
+# 	reverse_proxy repertoire-creator:7860
+# }
+# :8005 {
+# 	reverse_proxy weakness-report:7860
+# }

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +8,24 @@ version = "0.1.0"
 description = "Turn a Lichess study into a PDF you can step through move by move."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Shubhro Dev", email = "shubhro2004@gmail.com" }]
+keywords = ["chess", "lichess", "study", "pdf", "pgn", "export", "printable"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Framework :: FastAPI",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Games/Entertainment :: Board Games",
+]
 dependencies = [
     "chess>=1.11",
     "reportlab>=4.0",
@@ -31,3 +48,9 @@ include = ["lichess_study_pdf*"]
 
 [tool.setuptools.package-data]
 lichess_study_pdf = ["web/*"]
+
+[project.urls]
+Homepage = "https://github.com/spearb0lt/Lichess-Essentials"
+Repository = "https://github.com/spearb0lt/Lichess-Essentials"
+Issues = "https://github.com/spearb0lt/Lichess-Essentials/issues"
+Documentation = "https://github.com/spearb0lt/Lichess-Essentials/blob/main/Lichess-Study-to-PDF/README.md"

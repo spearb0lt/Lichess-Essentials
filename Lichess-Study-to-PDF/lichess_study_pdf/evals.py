@@ -28,6 +28,8 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
+from . import paths
+
 import chess
 import chess.engine
 import requests
@@ -81,7 +83,7 @@ def find_stockfish(explicit: str | None = None) -> str | None:
     if env:
         candidates.append(env)
 
-    engine_dir = Path(__file__).resolve().parent.parent / "engine"
+    engine_dir = paths.resolve(__file__, "engine", "STUDY_ENGINE_DIR")
     if engine_dir.is_dir():
         for path in sorted(engine_dir.rglob("stockfish*")):
             if path.is_file() and path.suffix.lower() in (".exe", ""):

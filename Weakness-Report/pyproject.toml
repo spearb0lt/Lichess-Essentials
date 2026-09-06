@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +8,24 @@ version = "0.1.0"
 description = "Review your whole game history and find out what you are actually bad at."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Shubhro Dev", email = "shubhro2004@gmail.com" }]
+keywords = ["chess", "lichess", "statistics", "weaknesses", "report", "game-review"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Framework :: FastAPI",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Games/Entertainment :: Board Games",
+]
 dependencies = [
     "chess>=1.11",
     "requests>=2.31",
@@ -16,18 +33,19 @@ dependencies = [
     "fastapi>=0.110",
     "uvicorn[standard]>=0.27",
     "pydantic>=2.0",
+    # Not optional: a weakness report *is* an aggregation of ChessAnalyzer's
+    # review, and batch.py requires it on the main path. See bridge.py for
+    # why there is only ever one copy of that algorithm.
+    "chess-game-analyzer>=0.1.0",
 ]
 
 [project.optional-dependencies]
-# The review itself -- accuracy, move labels, the engine pool -- comes from
-# ChessAnalyzer rather than a second copy of it. In a normal checkout it is
-# found in the sibling folder with no install at all; this is for the case
-# where the folders are not next to each other.
-#   pip install -e ChessAnalyzer
-review = ["chess-analyzer"]
+# Kept so that any command already written down keeps working: the review is
+# now a hard dependency above, so this extra is always satisfied already.
+review = ["chess-game-analyzer>=0.1.0"]
 # Board diagrams in the PDF, and the font handling that lets it draw them.
-#   pip install -e Lichess-Study-to-PDF
-diagrams = ["lichess-study-to-pdf"]
+#   pip install "weakness-report[diagrams]"
+diagrams = ["lichess-study-to-pdf>=0.1.0"]
 dev = ["pytest>=8.0"]
 
 [project.scripts]
@@ -38,3 +56,9 @@ include = ["weakness_report*"]
 
 [tool.setuptools.package-data]
 weakness_report = ["web/*"]
+
+[project.urls]
+Homepage = "https://github.com/spearb0lt/Lichess-Essentials"
+Repository = "https://github.com/spearb0lt/Lichess-Essentials"
+Issues = "https://github.com/spearb0lt/Lichess-Essentials/issues"
+Documentation = "https://github.com/spearb0lt/Lichess-Essentials/blob/main/Weakness-Report/README.md"

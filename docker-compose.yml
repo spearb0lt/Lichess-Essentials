@@ -1,0 +1,141 @@
+# All five apps on one machine, built from this repo. Written for an Oracle
+# Cloud Always Free ARM box, but there is nothing Oracle-specific in here --
+# it runs the same on any Linux host with Docker.
+#
+# Nothing in the apps changes to run this. The Dockerfiles are the same ones
+# Render builds; the ARM side is already verified (Debian ships Stockfish for
+# aarch64, so `apt-get install stockfish` works unmodified).
+#
+#   Setup:  cp .env.example .env  &&  nano .env
+#   Run:    docker compose up -d --build
+#   Update: git pull && docker compose up -d --build
+#
+# See ORACLE-DEPLOY.md for the full runbook.
+
+name: lichess-essentials
+
+# Shared settings. mem_limit is a safety cap, not a reservation -- one runaway
+# analysis should not be able to take the whole box down with it. The measured
+# peak for a single search at the apps' default Hash=256 is ~478MB, so 2g is
+# roomy; the Always Free box has 12GB and these never all peak at once.
+x-app: &app
+  restart: unless-stopped
+  env_file: [.env]
+  mem_limit: 2g
+  expose: ["7860"]
+
+services:
+
+  # ---- self-contained: the Dockerfile does `COPY . .` from its own folder ---
+
+  study-to-pdf:
+    <<: *app
+    build:
+      context: ./Lichess-Study-to-PDF
+      dockerfile: Dockerfile
+    volumes:
+      - study-out:/app/out
+      - study-engine:/app/engine
+      # ~/.cache/lichess-study-pdf/evals.json -- the eval cache. Containers
+      # run as root, so HOME is /root. Persisting this is the difference
+      # between re-analysing every position after a restart and not.
+      - study-cache:/root/.cache
+
+  chess-analyzer:
+    <<: *app
+    build:
+      context: ./ChessAnalyzer
+      dockerfile: Dockerfile
+    volumes:
+      - analyzer-games:/app/games      # imported games + settings.json
+      - analyzer-data:/app/data        # openings index
+      - analyzer-engines:/app/engines  # Lc0/Maia if you fetch them in-app
+      - analyzer-cache:/root/.cache
+
+  # ---- build context is the REPO ROOT: these COPY from sibling folders ------
+
+  player-prepper:
+    <<: *app
+    build:
+      context: .
+      dockerfile: Player-Prepper/Dockerfile
+    environment:
+      # Player-Prepper's image does NOT contain Repertoire-Creator, so its
+      # default book path (/app/Repertoire-Creator/repertoires) does not exist
+      # -- that is why a hosted Prepper reports "coverage was not measured"
+      # for every line. book.py honours REPERTOIRE_DIR, so pointing it at the
+      # shared volume below gives it the real repertoires instead.
+      REPERTOIRE_DIR: /repertoires
+    volumes:
+      - prepper-prep:/app/Player-Prepper/prep
+      - prepper-data:/app/Player-Prepper/data
+      # Read-only on purpose: book.py only ever iterates and reads this
+      # folder, and Repertoire-Creator is the single writer.
+      - repertoires:/repertoires:ro
+      - prepper-cache:/root/.cache
+
+  repertoire-creator:
+    <<: *app
+    build:
+      context: .
+      dockerfile: Repertoire-Creator/Dockerfile
+    volumes:
+      # The one writer of this volume. Because it is a real volume, the
+      # gitsync workaround in entrypoint.sh is no longer needed -- leave
+      # REPERTOIRE_GIT_REMOTE_URL unset and ignore its "ephemeral storage"
+      # warning on boot; that message is about container disk, and this is
+      # not container disk.
+      - repertoires:/app/Repertoire-Creator/repertoires
+      - repertoire-cache:/root/.cache
+
+  weakness-report:
+    <<: *app
+    build:
+      context: .
+      dockerfile: Weakness-Report/Dockerfile
+    volumes:
+      # One engine review per game; the expensive thing to lose.
+      - weakness-history:/app/Weakness-Report/history
+      - weakness-cache:/root/.cache
+
+  # ---- TLS + routing -------------------------------------------------------
+
+  # Subdomains, not paths. The frontends request "/static/app.js" and
+  # "/api/..." as absolute URLs, so serving an app under a path prefix like
+  # /analyzer/ would 404 every asset. One subdomain per app keeps each one at
+  # "/" where it expects to be, and costs nothing extra.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data      # certificates -- losing this re-issues them
+      - caddy-config:/config
+    env_file: [.env]
+    depends_on:
+      - study-to-pdf
+      - chess-analyzer
+      - player-prepper
+      - repertoire-creator
+      - weakness-report
+
+volumes:
+  study-out:
+  study-engine:
+  study-cache:
+  analyzer-games:
+  analyzer-data:
+  analyzer-engines:
+  analyzer-cache:
+  prepper-prep:
+  prepper-data:
+  prepper-cache:
+  repertoires:
+  repertoire-cache:
+  weakness-history:
+  weakness-cache:
+  caddy-data:
+  caddy-config:

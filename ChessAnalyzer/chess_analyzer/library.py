@@ -28,7 +28,9 @@ import threading
 import time
 from pathlib import Path
 
-DEFAULT_DIR = Path(__file__).resolve().parent.parent / "games"
+from . import paths
+
+DEFAULT_DIR = paths.resolve(__file__, "games", "ANALYZER_GAMES_DIR")
 
 #: Positions kept in the shared cache. At roughly 300 bytes each this is a
 #: few tens of megabytes -- large enough to hold hundreds of reviewed games,
