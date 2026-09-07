@@ -1,0 +1,83 @@
+# Publish all six packages to PyPI, triggered by a version tag.
+#
+# This does NOT run on an ordinary push. Committing to main changes nothing on
+# PyPI. A release happens only when a tag matching v* is pushed:
+#
+#   1. edit  version = "..."  in the pyproject.toml of whatever you changed
+#   2. commit that
+#   3. git tag v0.2.0 && git push origin v0.2.0
+#
+# PyPI refuses to overwrite a version that already exists, and refuses to let a
+# version number be reused even after a release is deleted. So step 1 is not
+# optional: a tag pushed without a version bump publishes nothing. Packages you
+# did not touch keep their old version and are skipped quietly -- that is what
+# skip-existing below is for, and it is the normal case, because most releases
+# change one app rather than all five.
+#
+# Authentication is Trusted Publishing (OpenID Connect): GitHub proves this
+# workflow's identity to PyPI and PyPI mints a short-lived token scoped to that
+# one project. There is no API token in this repository and none in GitHub
+# secrets. For it to work, each of the six projects needs a publisher
+# configured once at
+#   https://pypi.org/manage/project/<name>/settings/publishing/
+# with owner "spearb0lt", repository "Lichess-Essentials", workflow
+# "publish.yml" and environment "pypi".
+
+name: Publish to PyPI
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:        # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: ${{ matrix.dist }}
+    runs-on: ubuntu-latest
+
+    # One job per package, because a Trusted Publishing token is scoped to a
+    # single project. They run in parallel; fail-fast is off so that one
+    # package failing does not cancel the other five.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { dir: Lichess-Study-to-PDF, dist: lichess-study-to-pdf }
+          - { dir: ChessAnalyzer,        dist: chess-game-analyzer }
+          - { dir: Repertoire-Creator,   dist: repertoire-creator }
+          - { dir: Player-Prepper,       dist: player-prepper }
+          - { dir: Weakness-Report,      dist: weakness-report }
+          - { dir: lichess-essentials,   dist: lichess-essentials }
+
+    environment: pypi        # must match the publisher's Environment name
+
+    permissions:
+      id-token: write        # required: this is what signs the OIDC token
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build ${{ matrix.dist }}
+        run: |
+          python -m pip install --upgrade build
+          python -m build --outdir dist "${{ matrix.dir }}"
+
+      - name: Check the metadata renders on PyPI
+        run: |
+          python -m pip install --upgrade twine
+          python -m twine check dist/*
+
+      - name: Publish ${{ matrix.dist }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          # A tag that bumps only one package leaves the others unchanged;
+          # skip rather than fail on a version that is already on PyPI.
+          skip-existing: true

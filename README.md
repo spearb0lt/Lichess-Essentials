@@ -267,6 +267,48 @@ Their own folders — `Player-Prepper/prep/` and `Weakness-Report/history/` —
 are gitignored: a scouting report about a named person, and a page of numbers
 about how you play, are not things to publish by accident.
 
+## Releasing
+
+Releases are published by [`.github/workflows/publish.yml`](https://github.com/spearb0lt/Lichess-Essentials/blob/main/.github/workflows/publish.yml),
+which runs **only on a version tag**. Pushing to `main` changes nothing on
+PyPI.
+
+```bash
+# 1. bump the version of whatever changed
+#    e.g. Weakness-Report/pyproject.toml:  version = "0.2.0"
+# 2. commit it
+git commit -am "Weakness Report 0.2.0"
+# 3. tag and push the tag
+git tag v0.2.0
+git push origin main --tags
+```
+
+The version bump is the part that does the work. PyPI will not overwrite a
+version that exists, and will not let a version number be reused even after a
+release is deleted — so a tag pushed without a bump publishes nothing. The
+five packages you did not touch are skipped rather than failing, which is the
+normal case: most releases change one app.
+
+Authentication is [Trusted Publishing](https://docs.pypi.org/trusted-publishers/)
+rather than an API token. GitHub proves the workflow's identity to PyPI over
+OpenID Connect and PyPI issues a short-lived token scoped to one project, so
+there is no long-lived credential in this repository or in GitHub secrets.
+
+Each of the six projects needs its publisher configured once, at
+`https://pypi.org/manage/project/<name>/settings/publishing/`:
+
+| Field | Value |
+|---|---|
+| Owner | `spearb0lt` |
+| Repository name | `Lichess-Essentials` |
+| Workflow name | `publish.yml` |
+| Environment name | `pypi` |
+
+The environment must also exist on the GitHub side, under
+**Settings → Environments → New environment → `pypi`**. It is worth adding a
+required reviewer there, so that a release waits for a click rather than
+happening the instant a tag lands.
+
 ## Licence
 
 MIT — see [LICENSE](https://github.com/spearb0lt/Lichess-Essentials/blob/main/LICENSE).
