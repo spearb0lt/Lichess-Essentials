@@ -16,7 +16,7 @@
 > try it; treat anything you put in as public.
 >
 > It is plain **HTTP** — there is no domain on it yet — so do not paste a
-> Lichess token you care about. See [FUTURE.md](../FUTURE.md) for how the
+> Lichess token you care about. See [FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md) for how the
 > deployment works, how to reset these credentials, and how HTTPS gets turned
 > on.
 
@@ -296,7 +296,7 @@ layout — the study exporter lays out *lines of chess*, and a weakness report i
 a different shape — but it borrows that app's board renderer for the diagrams
 and its font handling, both optional.
 
-<img src="docs/pdf-cover.png" width="420" alt="The first page of the exported PDF: the figures it was built from, then the ranked findings each with a bar and its sample, then what you do well"> <img src="docs/pdf-moments.png" width="420" alt="A PDF page of the worst moves as board diagrams, each with the move played, what it cost, the engine's move and the kind of position">
+<img src="https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Weakness-Report/docs/pdf-cover.png" width="420" alt="The first page of the exported PDF: the figures it was built from, then the ranked findings each with a bar and its sample, then what you do well"> <img src="https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Weakness-Report/docs/pdf-moments.png" width="420" alt="A PDF page of the worst moves as board diagrams, each with the move played, what it cost, the engine's move and the kind of position">
 
 **CSV** gives every bucket of every slice as one file, with the dimension as a
 column, for anyone who would rather sort by their own column.
@@ -309,7 +309,7 @@ One column below 860px, with the report first, then the position you tapped,
 then the history list and settings. Settings collapse into a fold, the tab bar
 scrolls, and the board is never allowed to fill a tablet.
 
-<img src="docs/phone.png" width="300" alt="Weakness Report on a phone: a two-row header, the summary tiles, and the findings list">
+<img src="https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Weakness-Report/docs/phone.png" width="300" alt="Weakness Report on a phone: a two-row header, the summary tiles, and the findings list">
 
 ---
 

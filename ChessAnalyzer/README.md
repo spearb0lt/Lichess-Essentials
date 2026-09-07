@@ -16,7 +16,7 @@
 > try it; treat anything you put in as public.
 >
 > It is plain **HTTP** — there is no domain on it yet — so do not paste a
-> Lichess token you care about. See [FUTURE.md](../FUTURE.md) for how the
+> Lichess token you care about. See [FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md) for how the
 > deployment works, how to reset these credentials, and how HTTPS gets turned
 > on.
 
@@ -82,8 +82,8 @@ Standard.
 
 <table>
 <tr>
-<td width="50%"><img src="docs/report.png" width="100%" alt="The review panel: accuracy for both players, centipawn loss, an ACPL-implied rating, how often each found the engine's move, per-phase accuracy, the opening name, the Chess.com-style label counts, the Lichess-scale counts, and the turning points ranked by what they cost"></td>
-<td width="50%"><img src="docs/moves.png" width="100%" alt="The Moves panel: every move of the game with its label badge and its evaluation, White down the left and Black down the right"></td>
+<td width="50%"><img src="https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/ChessAnalyzer/docs/report.png" width="100%" alt="The review panel: accuracy for both players, centipawn loss, an ACPL-implied rating, how often each found the engine's move, per-phase accuracy, the opening name, the Chess.com-style label counts, the Lichess-scale counts, and the turning points ranked by what they cost"></td>
+<td width="50%"><img src="https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/ChessAnalyzer/docs/moves.png" width="100%" alt="The Moves panel: every move of the game with its label badge and its evaluation, White down the left and Black down the right"></td>
 </tr>
 <tr>
 <td>The report. Two scales side by side, per-phase accuracy, and the turning points ranked by what they cost.</td>
@@ -121,7 +121,7 @@ What it is: the same idea, built from rules that are **written down and shown
 in the app** — click *what do these mean?* in the review panel. When a label
 surprises you, you can read why it fired instead of guessing.
 
-<img src="docs/rules.png" width="640" alt="The what the labels mean dialog: every label from brilliant down to blunder with the rule that fires it written out, including the material threshold for brilliant and the winning-chance bands for the rest">
+<img src="https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/ChessAnalyzer/docs/rules.png" width="640" alt="The what the labels mean dialog: every label from brilliant down to blunder with the rule that fires it written out, including the material threshold for brilliant and the winning-chance bands for the rest">
 
 The rules that took the most tuning:
 
@@ -275,7 +275,7 @@ copy.
 Click the engine pill to see the picker. It reads each project's own GitHub
 releases, so a new Stockfish appears the day it ships:
 
-<img src="docs/engines.png" width="620" alt="The engine picker: the Stockfish already found on this machine at the top, then every Stockfish release available to download with its size and the CPU builds it ships, then Lc0">
+<img src="https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/ChessAnalyzer/docs/engines.png" width="620" alt="The engine picker: the Stockfish already found on this machine at the top, then every Stockfish release available to download with its size and the CPU builds it ships, then Lc0">
 
 - **Stockfish**, any recent version (~77 MB).
 - **Lc0** (~24 MB) plus a network file. The **Maia** networks are the

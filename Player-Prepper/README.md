@@ -16,7 +16,7 @@
 > try it; treat anything you put in as public.
 >
 > It is plain **HTTP** — there is no domain on it yet — so do not paste a
-> Lichess token you care about. See [FUTURE.md](../FUTURE.md) for how the
+> Lichess token you care about. See [FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md) for how the
 > deployment works, how to reset these credentials, and how HTTPS gets turned
 > on.
 
@@ -209,7 +209,7 @@ answer" and "you do not". Set the colour explicitly to settle it.
 you can see how many positions a source actually contributes before measuring
 anything against it.
 
-<img src="docs/book.png" width="620" alt="The book dialog with two sources stacked -- a Repertoire-Creator repertoire and the user's own Chess.com games -- and the built book reported underneath as positions, moves and branch points">
+<img src="https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Player-Prepper/docs/book.png" width="620" alt="The book dialog with two sources stacked -- a Repertoire-Creator repertoire and the user's own Chess.com games -- and the built book reported underneath as positions, moves and branch points">
 
 ---
 
@@ -301,7 +301,7 @@ follow a line down to where it gets thin.
 Whatever you click — a gap, one of their moves, an exploit row, a position in
 Explore — lands on the board beside the report, and the board is not a picture.
 
-<img src="docs/board.png" width="380" alt="The board panel: an eval bar down the left, the position with the engine's move drawn on it, first/back/forward/last and flip controls with the evaluation beside them, the move strip, and the engine's ranked lines underneath">
+<img src="https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Player-Prepper/docs/board.png" width="380" alt="The board panel: an eval bar down the left, the position with the engine's move drawn on it, first/back/forward/last and flip controls with the evaluation beside them, the move strip, and the engine's ranked lines underneath">
 
 - **Play on from it.** Click a piece and its legal moves light up; click a
   destination and you are off down your own line. Play at a point you have
@@ -339,7 +339,7 @@ settings. Settings collapse into a fold on narrow screens. Everything works by
 touch — tap a piece, tap a square — and the forward and back buttons stand in
 for the wheel.
 
-<img src="docs/phone.png" width="300" alt="Player Prepper on a phone: a two-row header, the report with its scrolling tab bar, then the board with its eval bar and engine lines, then the scout list and collapsed settings">
+<img src="https://raw.githubusercontent.com/spearb0lt/Lichess-Essentials/main/Player-Prepper/docs/phone.png" width="300" alt="Player Prepper on a phone: a two-row header, the report with its scrolling tab bar, then the board with its eval bar and engine lines, then the scout list and collapsed settings">
 
 ---
 

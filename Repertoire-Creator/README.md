@@ -16,7 +16,7 @@
 > try it; treat anything you put in as public.
 >
 > It is plain **HTTP** — there is no domain on it yet — so do not paste a
-> Lichess token you care about. See [FUTURE.md](../FUTURE.md) for how the
+> Lichess token you care about. See [FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md) for how the
 > deployment works, how to reset these credentials, and how HTTPS gets turned
 > on.
 

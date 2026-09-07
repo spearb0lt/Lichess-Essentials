@@ -25,7 +25,7 @@
 > do not paste a Lichess token you care about; every app also takes one per
 > session in its own UI, which is the intended way to use them.
 >
-> [FUTURE.md](FUTURE.md) has the deployment details: how it is wired, how to
+> [FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md) has the deployment details: how it is wired, how to
 > reset these credentials, and the exact steps to add a domain and HTTPS.
 
 Tools that fix the things I keep running into as a long-time Lichess user.
