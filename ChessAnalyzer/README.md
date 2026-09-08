@@ -9,16 +9,19 @@
 
 > ### Try it live
 >
-> **http://analyzer.79-72-84-141.sslip.io** — username `aayush`, password `xLpRoJIALb3Abp`
+> **https://analyzer.lichess-essentials.duckdns.org** — username `test`, password `testpassword1234@`
 >
-> Running on a free Oracle Cloud ARM machine, alongside the other four apps in
-> this repo. The credentials are shared and published on purpose so anyone can
-> try it; treat anything you put in as public.
+> Runs on a free Oracle Cloud ARM machine alongside the other four apps in this
+> repo, behind real HTTPS. The credentials are shared and published on purpose
+> so anyone can try it, so treat anything you put in as public — the data is
+> shared too, and there are no user accounts.
 >
-> It is plain **HTTP** — there is no domain on it yet — so do not paste a
-> Lichess token you care about. See [FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md) for how the
-> deployment works, how to reset these credentials, and how HTTPS gets turned
-> on.
+> **Do not paste a Lichess token you care about.** Not a transport problem
+> (that link is encrypted) — the token is held in a process-wide global, so it
+> would be used by every other visitor until the app restarts.
+>
+> See [FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md) for how the deployment works and how to reset
+> these credentials.
 
 Review any chess game with an engine on your own machine — a Lichess game, a
 Chess.com game, a PGN you pasted, or a position you typed. Accuracy, move

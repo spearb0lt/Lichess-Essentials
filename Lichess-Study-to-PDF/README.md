@@ -9,15 +9,13 @@
 
 > ### Try it live
 >
-> **http://study.79-72-84-141.sslip.io** — no login needed
+> **https://study.lichess-essentials.duckdns.org** — no login needed
 >
-> Running on a free Oracle Cloud ARM machine, alongside the other four apps in
-> this repo. This app has **no password gate implemented**, so anyone with the
-> link can use it.
+> Runs on a free Oracle Cloud ARM machine alongside the other four apps in this
+> repo, behind real HTTPS. This app has **no password gate implemented**, so
+> anyone with the link can use it, and the data is shared.
 >
-> It is plain **HTTP** — there is no domain on it yet — so do not paste a
-> Lichess token you care about. See [FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md) for how the
-> deployment works and how HTTPS gets turned on.
+> See [FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md) for how the deployment works.
 
 Turn a Lichess study into a PDF worth reading, plus a browser interface for
 working through it first.

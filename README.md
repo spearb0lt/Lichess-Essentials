@@ -1,7 +1,7 @@
 # Lichess Essentials
 
 [![PyPI](https://img.shields.io/pypi/v/lichess-essentials?logo=pypi&logoColor=white)](https://pypi.org/project/lichess-essentials/)
-[![Python](https://img.shields.io/pypi/pyversions/lichess-essentials)](https://pypi.org/project/lichess-essentials/)
+[![Python](https://img.shields.Vio/pypi/pyversions/lichess-essentials)](https://pypi.org/project/lichess-essentials/)
 [![Downloads](https://static.pepy.tech/badge/lichess-essentials)](https://pepy.tech/project/lichess-essentials)
 [![Downloads](https://static.pepy.tech/badge/lichess-essentials/month)](https://pepy.tech/project/lichess-essentials)
 [![License](https://img.shields.io/pypi/l/lichess-essentials)](LICENSE)
@@ -9,24 +9,27 @@
 
 > ### Try them live
 >
-> All five run on one free Oracle Cloud ARM machine. No install needed.
+> All five run on one free Oracle Cloud ARM machine, behind real HTTPS.
+> No install needed.
 >
 > | App | Link | Login |
 > |---|---|---|
-> | Lichess Study to PDF | http://study.79-72-84-141.sslip.io | *none — open* |
-> | Chess Analyzer | http://analyzer.79-72-84-141.sslip.io | `aayush` / `xLpRoJIALb3Abp` |
-> | Player Prepper | http://prepper.79-72-84-141.sslip.io | `aayush` / `5okPTQeWV6AdRC` |
-> | Repertoire Creator | http://repertoire.79-72-84-141.sslip.io | `aayush` / `MXNgiboHu4kTcv` |
-> | Weakness Report | http://weakness.79-72-84-141.sslip.io | `aayush` / `VdMainT5WEuWkr` |
+> | Lichess Study to PDF | https://study.lichess-essentials.duckdns.org | *none — open* |
+> | Chess Analyzer | https://analyzer.lichess-essentials.duckdns.org | `test` / `testpassword1234@` |
+> | Player Prepper | https://prepper.lichess-essentials.duckdns.org | `test` / `testpassword1234@` |
+> | Repertoire Creator | https://repertoire.lichess-essentials.duckdns.org | `test` / `testpassword1234@` |
+> | Weakness Report | https://weakness.lichess-essentials.duckdns.org | `test` / `testpassword1234@` |
 >
-> The credentials are shared and published on purpose so anyone can try these,
-> so treat anything you put in as public. Study to PDF has no password gate
-> implemented at all. It is plain **HTTP** for now — no domain on it yet — so
-> do not paste a Lichess token you care about; every app also takes one per
-> session in its own UI, which is the intended way to use them.
+> The credentials are shared and published on purpose so anyone can try these.
+> There are no user accounts — the saved data is shared too, so treat anything
+> you put in as public. Study to PDF has no password gate at all.
 >
-> [FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md) has the deployment details: how it is wired, how to
-> reset these credentials, and the exact steps to add a domain and HTTPS.
+> **Do not paste a Lichess token you care about.** The links are encrypted, but
+> four of the apps hold a pasted token in a process-wide global, so it would be
+> used by every other visitor until that app restarts.
+>
+> [FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md) has the deployment details, credential reset steps and
+> the full list of caveats.
 
 Tools that fix the things I keep running into as a long-time Lichess user.
 Built for my own use, open source in case they are useful to anyone else.

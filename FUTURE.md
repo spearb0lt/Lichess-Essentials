@@ -1,8 +1,8 @@
 # FUTURE.md — the live deployment, and how to change it
 
 Notes for later-me. What is running, where, and the exact procedure for the
-things that will eventually need doing: buying a domain, turning on HTTPS,
-resetting the passwords, making the IP permanent.
+things that will eventually need doing: resetting the passwords, making the IP
+permanent, moving to a domain you own, keeping the box from being reclaimed.
 
 Nothing here is urgent. Everything here is written down because it is the kind
 of thing that is obvious today and completely forgotten in three months.
@@ -20,23 +20,47 @@ ARM VM, one `docker compose` project, six containers.
 | Shape | `VM.Standard.A1.Flex`, **1 OCPU / 6 GB**, ARM (`aarch64`) |
 | OS | Ubuntu 24.04.4 LTS |
 | Public IP | `79.72.84.141` — **see "Make the IP permanent" below** |
+| Domain | `lichess-essentials.duckdns.org` (free, DuckDNS) |
+| TLS | Let's Encrypt via Caddy, auto-renewing |
 | SSH | `ssh -i <your-key>.key ubuntu@79.72.84.141` |
 | Repo on the VM | `~/Lichess-Essentials` |
 | Docker | 29.8.0, Compose v5.5.1 |
 
 ### Live URLs
 
-No domain is owned yet. `sslip.io` is a free public DNS service that resolves
-`<anything>.79-72-84-141.sslip.io` to `79.72.84.141`, which is what gives each
-app its own hostname without buying anything.
+Real HTTPS, on a free DuckDNS name. Valid Let's Encrypt certificates, so these
+work on phones — which the earlier `sslip.io` setup did not.
 
 | App | URL | Login |
 |---|---|---|
-| Lichess Study to PDF | http://study.79-72-84-141.sslip.io | none — open to anyone |
-| Chess Analyzer | http://analyzer.79-72-84-141.sslip.io | `aayush` / `xLpRoJIALb3Abp` |
-| Player Prepper | http://prepper.79-72-84-141.sslip.io | `aayush` / `5okPTQeWV6AdRC` |
-| Repertoire Creator | http://repertoire.79-72-84-141.sslip.io | `aayush` / `MXNgiboHu4kTcv` |
-| Weakness Report | http://weakness.79-72-84-141.sslip.io | `aayush` / `VdMainT5WEuWkr` |
+| Lichess Study to PDF | https://study.lichess-essentials.duckdns.org | none — open to anyone |
+| Chess Analyzer | https://analyzer.lichess-essentials.duckdns.org | `test` / `testpassword1234@` |
+| Player Prepper | https://prepper.lichess-essentials.duckdns.org | `test` / `testpassword1234@` |
+| Repertoire Creator | https://repertoire.lichess-essentials.duckdns.org | `test` / `testpassword1234@` |
+| Weakness Report | https://weakness.lichess-essentials.duckdns.org | `test` / `testpassword1234@` |
+
+Plus **http://79.72.84.141/** — a landing page on the bare IP, plain HTTP, no
+DNS needed. It is the fallback and the quickest way to answer "can this device
+reach the server at all?"
+
+The old `*.79-72-84-141.sslip.io` links **301-redirect** to the HTTPS ones, so
+anything already shared keeps working.
+
+### Why DuckDNS and not sslip.io
+
+`sslip.io` resolves fine, but it is **not on the Public Suffix List**, so every
+sslip.io user on earth shares one Let's Encrypt bucket of 50 certificates a
+week. Certificates for it are unobtainable in practice, which meant no HTTPS,
+which meant **phones could not load the site at all** — a mobile browser tries
+`https://` first and will not fall back when nothing is listening on 443.
+
+`duckdns.org` **is** on that list, so `lichess-essentials.duckdns.org` counts as
+its own registered domain with its own rate limit. All five certificates issued
+first try.
+
+Checked, in case it is ever needed again: `no-ip.org`, `ddns.net`, `dynu.net`,
+`hopto.org`, `zapto.org` and `is-a.dev` are also on the list. `afraid.org` and
+`mooo.com` are not.
 
 ### Why hostnames and not `IP:8001`, `IP:8002`, …
 
@@ -141,67 +165,57 @@ Two real caveats:
    hold anything private, change the passwords and remove them from the
    READMEs in the same commit.
 
-And regardless of the gate: **the site is plain HTTP.** Passwords and any
-Lichess token pasted into a page cross the network in clear text. Fix that by
-getting a domain — next section.
+The transport is no longer the weak part: the site is real HTTPS with valid
+Let's Encrypt certificates, so passwords and tokens are encrypted in flight.
+What remains is the shared-token problem — see "Everything is shared" below.
 
 ---
 
-## Buy a domain and turn on HTTPS
+## The domain and HTTPS — already done
 
-Roughly 20 minutes, most of it waiting for DNS. **No rebuild, no code change.**
+Working, nothing to do. Recorded here for when it needs changing.
 
-### 1. Buy a domain
+**What is set up:** `lichess-essentials.duckdns.org`, free from DuckDNS, pointed at `79.72.84.141`.
+DuckDNS resolves every subdomain of that name to the same IP, which is what
+gives each app its own hostname. Caddy holds five Let's Encrypt certificates
+and renews them itself.
 
-Any registrar. Cloudflare and Porkbun are cheap and do not upsell.
+**Where the switch lives:** `DOMAIN` in `~/Lichess-Essentials/.env`, and the
+site blocks in `~/caddy-http/Caddyfile`. Those blocks have **no** `http://`
+prefix, which is what tells Caddy to do automatic HTTPS. The sslip.io redirect
+blocks below them **do** have the prefix, deliberately — without it Caddy would
+try to get a certificate for sslip.io, fail on the shared rate limit, and take
+the whole config down.
 
-### 2. Point five A records at the machine
+### If the IP ever changes
 
-At the registrar's DNS panel, five records, all to `79.72.84.141`:
+DuckDNS is dynamic DNS, so this is a one-field update rather than a migration:
+log in at duckdns.org, put the new IP in, done. Certificates are unaffected —
+they are tied to the name, not the address. This is a good reason to keep using
+the DuckDNS name in preference to the raw IP anywhere it matters.
 
-```
-study        A    79.72.84.141
-analyzer     A    79.72.84.141
-prepper      A    79.72.84.141
-repertoire   A    79.72.84.141
-weakness     A    79.72.84.141
-```
+### Moving to a domain you own
 
-Wait until they resolve before step 3 — Caddy asks Let's Encrypt for
-certificates on startup and that only works once the names are public:
+Buy it, point five A records (`study`, `analyzer`, `prepper`, `repertoire`,
+`weakness`) at the IP, wait for `dig +short study.yourdomain.com` to answer,
+then:
 
 ```bash
-dig +short study.yourdomain.com     # must print 79.72.84.141
-```
-
-### 3. Switch the deployment over
-
-```bash
-ssh -i <your-key>.key ubuntu@79.72.84.141
 cd ~/Lichess-Essentials
-
-nano .env
-#   DOMAIN=yourdomain.com
-#   ACME_EMAIL=you@yourdomain.com
-
-rm docker-compose.override.yml     # this is the whole switch
-
+nano .env                     # DOMAIN=yourdomain.com
 docker compose up -d
-docker compose logs -f caddy       # watch the certificates get issued
+docker compose logs -f caddy  # watch five new certificates issue
 ```
 
-That is the entire change. `docker-compose.override.yml` exists only to swap
-the repo's HTTPS `Caddyfile` for the HTTP-only one in `~/caddy-http`. Delete
-it and compose falls back to the tracked `Caddyfile`, which has no `http://`
-prefixes — so Caddy does automatic HTTPS, including redirecting port 80.
+Keep the sslip.io and DuckDNS redirect blocks around for a while so old links
+survive.
 
-Port 443 is already open in both firewalls. Nothing else to do.
+### Renewal
 
-### 4. Afterwards
-
-- Update the URL tables here and in the six READMEs.
-- The old `*.sslip.io` URLs keep working. Delete those blocks from the
-  `Caddyfile` if you want them to stop.
+Caddy renews automatically, roughly 30 days before expiry, and stores
+certificates in the `caddy-data` volume. **Do not delete that volume** — losing
+it forces a full re-issue, which is fine occasionally but counts against the
+weekly rate limit if it happens repeatedly.
 
 ---
 
@@ -537,6 +551,90 @@ bottom of the script. Always run without `--apply` first and read the list.
 
 ---
 
+## Updating the README on PyPI
+
+**There is no way to edit a PyPI description in place.** No web form, no API
+call, nothing in the project settings. The "Project description" you see on a
+PyPI page is the `long_description` baked into the wheel and sdist of a
+*specific release*. Changing what PyPI shows means **publishing a new version**.
+That is the whole answer; everything below is mechanics.
+
+Each `pyproject.toml` here says `readme = "README.md"`, resolved relative to
+that file. So:
+
+| Package | README that becomes its PyPI page |
+|---|---|
+| `chess-game-analyzer` | `ChessAnalyzer/README.md` |
+| `lichess-study-to-pdf` | `Lichess-Study-to-PDF/README.md` |
+| `player-prepper` | `Player-Prepper/README.md` |
+| `repertoire-creator` | `Repertoire-Creator/README.md` |
+| `weakness-report` | `Weakness-Report/README.md` |
+| `lichess-essentials` | `lichess-essentials/README.md` |
+
+The repo-root `README.md` is **not** packaged by anything — it is GitHub only.
+
+### The procedure
+
+`.github/workflows/publish.yml` publishes on a `v*` tag via Trusted Publishing.
+Its own comments say this, and it is worth repeating because it is the step
+people skip:
+
+```bash
+# 1. bump the version of EVERY package whose README (or code) changed
+nano ChessAnalyzer/pyproject.toml        # version = "0.1.2"
+# ... and the others
+
+# 2. commit
+git add -A && git commit -m "Live HTTPS links and demo credentials in the READMEs"
+
+# 3. tag and push the tag -- pushing to main alone publishes nothing
+git tag v0.1.2
+git push origin main
+git push origin v0.1.2
+```
+
+**A tag without a version bump publishes nothing.** The workflow sets
+`skip-existing: true`, so a package whose version is already on PyPI is skipped
+quietly. That is deliberate — most releases touch one app — but it means a
+forgotten bump looks like a successful run that changed nothing.
+
+**PyPI never lets a version number be reused,** even after you delete the
+release. So there is no fixing a bad upload in place: the only move is another
+bump. Get it right, or accept a wasted number.
+
+### Check before you tag
+
+The workflow runs `twine check`, but it is faster to catch locally:
+
+```bash
+python -m pip install --upgrade build twine
+python -m build --outdir /tmp/dist ChessAnalyzer
+python -m twine check /tmp/dist/*
+```
+
+All six were built and checked this way after the credential change — every
+artifact PASSED, so the READMEs render.
+
+### The trap: relative links
+
+**Relative Markdown links break on PyPI.** GitHub resolves `](../FUTURE.md)`
+against the repo; PyPI has no repo to resolve against, so it becomes a dead
+link. That is what the earlier "Absolute README links" commit was fixing.
+
+Anything pointing outside its own package must be a full URL:
+
+```
+[FUTURE.md](https://github.com/spearb0lt/Lichess-Essentials/blob/main/FUTURE.md)
+```
+
+Note that `twine check` does **not** catch this — it validates that the
+description renders, not that the links resolve. It has to be watched by hand.
+
+Still relative, and worth a look sometime: the `[![License](...)](LICENSE)`
+badge target in each app README.
+
+---
+
 ## Loose ends
 
 - **The SSH key lives in the repo folder.** It is gitignored (`*.key`,
@@ -546,8 +644,13 @@ bottom of the script. Always run without `--apply` first and read the list.
   ends, anything not Always Free-eligible stops. The current shape is
   A1.Flex within free limits, so it should survive — worth confirming when the
   trial expires.
-- **`sslip.io` is someone else's free service.** If it goes down, the URLs
-  stop resolving. Owning a domain removes that dependency.
+- **DuckDNS is someone else's free service.** If it goes down, the hostnames
+  stop resolving and with them the certificates' usefulness. The bare-IP
+  landing page at `http://79.72.84.141/` keeps working regardless, which is
+  why it stays. Owning a domain removes the dependency entirely.
+- **DuckDNS names can expire from inactivity.** The account has to be touched
+  occasionally or the name can be released. Worth a calendar reminder, or point
+  the DuckDNS updater at the box so it checks in on its own.
 - **Render is still an option** — `render.yaml` in this repo deploys all five
   there. It was rejected because free Render is 512 MB and ~0.1 CPU, and
   ChessAnalyzer's default `Hash=256` alone peaked at 478 MB of that 512 MB.

@@ -6,6 +6,23 @@ All five apps in one install:
 pip install lichess-essentials
 ```
 
+## Try them live first
+
+All five are running on a free Oracle Cloud box if you want to look before you
+install. Login `test` / `testpassword1234@` where asked:
+
+| App | Link |
+|---|---|
+| Lichess Study to PDF | https://study.lichess-essentials.duckdns.org *(no login)* |
+| Chess Analyzer | https://analyzer.lichess-essentials.duckdns.org |
+| Player Prepper | https://prepper.lichess-essentials.duckdns.org |
+| Repertoire Creator | https://repertoire.lichess-essentials.duckdns.org |
+| Weakness Report | https://weakness.lichess-essentials.duckdns.org |
+
+Shared demo credentials and shared data, so treat anything you put in as
+public, and do not paste a Lichess token you care about.
+
+
 That gives you five commands:
 
 | Command | What it does |
