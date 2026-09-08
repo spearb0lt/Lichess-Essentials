@@ -1,0 +1,58 @@
+# Real HTTPS, on a name that Let's Encrypt will actually issue for.
+#
+# duckdns.org IS on the Public Suffix List, so lichess-essentials.duckdns.org
+# counts as its own registered domain for Let's Encrypt rate limits (50 certs
+# a week to ourselves). sslip.io is NOT on that list, which is why certificates
+# for it are unobtainable in practice -- every sslip.io user on earth shares one
+# bucket. That single fact is the whole reason for the switch.
+#
+# No http:// prefixes below: that is deliberate. Caddy sees a bare hostname,
+# obtains a certificate over the HTTP-01 challenge on port 80, serves HTTPS on
+# 443, and redirects 80 -> 443 by itself. Which is what makes these work on a
+# phone, where the browser tries https:// first and will not fall back.
+
+study.{$DOMAIN} {
+	reverse_proxy study-to-pdf:7860
+}
+analyzer.{$DOMAIN} {
+	reverse_proxy chess-analyzer:7860
+}
+prepper.{$DOMAIN} {
+	reverse_proxy player-prepper:7860
+}
+repertoire.{$DOMAIN} {
+	reverse_proxy repertoire-creator:7860
+}
+weakness.{$DOMAIN} {
+	reverse_proxy weakness-report:7860
+}
+
+# ---- the old sslip.io links, redirected rather than broken ----------------
+# These are published in the repo READMEs, so they have to keep working. The
+# http:// prefix here is load-bearing: without it Caddy would try to get a
+# certificate for *.sslip.io and fail on the shared rate limit, taking the
+# whole config down with it.
+http://study.79-72-84-141.sslip.io {
+	redir https://study.{$DOMAIN}{uri} permanent
+}
+http://analyzer.79-72-84-141.sslip.io {
+	redir https://analyzer.{$DOMAIN}{uri} permanent
+}
+http://prepper.79-72-84-141.sslip.io {
+	redir https://prepper.{$DOMAIN}{uri} permanent
+}
+http://repertoire.79-72-84-141.sslip.io {
+	redir https://repertoire.{$DOMAIN}{uri} permanent
+}
+http://weakness.79-72-84-141.sslip.io {
+	redir https://weakness.{$DOMAIN}{uri} permanent
+}
+
+# ---- bare IP on port 80: the landing page ---------------------------------
+# An IP address cannot have a publicly trusted certificate, so this one stays
+# HTTP. It is the fallback that needs no DNS at all, and the quickest way to
+# tell whether a device can reach the server.
+:80 {
+	root * /srv/site
+	file_server
+}

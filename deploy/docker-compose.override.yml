@@ -1,0 +1,24 @@
+# Local-only, untracked, VM-specific. Two jobs now:
+#
+#   1. Point Caddy at ~/caddy-http/Caddyfile, which serves real HTTPS on the
+#      DuckDNS names plus a plain-HTTP landing page on the bare IP. The repo's
+#      tracked Caddyfile cannot do the second part, hence still overriding.
+#   2. Hold mem_limit at 1g each. Five containers x 2g is 10GiB of limits on a
+#      5.8GiB host, which lets the HOST run out before any container hits its
+#      cap -- and the host OOM killer may pick dockerd or sshd. The tracked
+#      compose file says 1g too once that change is pushed.
+#
+# 8001-8005 are deliberately NOT published any more: with working HTTPS they
+# added nothing except open ports.
+
+services:
+  caddy:
+    volumes:
+      - /home/ubuntu/caddy-http/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /home/ubuntu/caddy-http/site:/srv/site:ro
+
+  study-to-pdf:       { mem_limit: 1g }
+  chess-analyzer:     { mem_limit: 1g }
+  player-prepper:     { mem_limit: 1g }
+  repertoire-creator: { mem_limit: 1g }
+  weakness-report:    { mem_limit: 1g }

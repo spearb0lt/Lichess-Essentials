@@ -219,28 +219,41 @@ weekly rate limit if it happens repeatedly.
 
 ---
 
-## Make the IP permanent
+## The public IP — less fragile than it looks
 
-**This is the thing most likely to break the links in the READMEs.**
+**Correction to an earlier version of this file, which had this wrong.** It
+said stopping the VM releases an ephemeral public IP and therefore breaks every
+published URL. That is AWS behaviour, not Oracle's. Oracle's documentation:
 
-Oracle's create-instance wizard assigns an **ephemeral** public IP by default.
-An ephemeral IP is released when the instance is stopped or terminated, and a
-different one is assigned when it comes back. Stop the VM once and every URL
-in this repo is wrong.
+> "When you stop an instance, its ephemeral public IPs remain assigned to the
+> instance."
 
-I was not able to confirm whether `79.72.84.141` is ephemeral or reserved —
-the OCI console repeatedly failed to render the VNIC detail page. Assume
-ephemeral until checked:
+An ephemeral public IP is deleted only when its private IP is deleted, its VNIC
+is detached, or **the instance is terminated**.
 
-> Instance → **Networking** → **Attached VNICs** → click the VNIC →
-> **IPv4 Addresses** → look at the primary row's **Public IP Type**
+| Action | IP changes? |
+|---|---|
+| Reboot | No |
+| **Stop and start** (e.g. resizing the shape) | **No** |
+| Terminate and recreate | **Yes** |
+| Assign a reserved public IP | Yes, once |
 
-To make it permanent, assign a **reserved** public IP. Note that Oracle does
-not convert an ephemeral address into a reserved one in place — you get a
-**different address**, so do this *before* sharing links widely, and update
-every URL afterwards.
+And even a genuine IP change does not break the links, because they resolve
+through DuckDNS: put the new address in at duckdns.org and the same five URLs
+follow. Certificates are issued to names, not addresses, so they re-issue
+against the same hostnames.
 
-Reserved public IPs are included in Always Free.
+**So a reserved public IP is a convenience, not a prerequisite** — it saves one
+DuckDNS edit after a rebuild. It is included in Always Free if you want it:
+
+> Instance → **Networking** → **Attached VNICs** → the VNIC → **IPv4
+> Addresses** → primary row → **Edit** → Public IP Type → **Reserved**
+
+Oracle does not convert an ephemeral address into a reserved one in place — you
+get a **different address**, so this action *is itself* an IP change. Update
+DuckDNS straight afterwards.
+
+Full rebuild procedure: [NEWHOST.md](NEWHOST.md).
 
 ---
 
@@ -254,8 +267,9 @@ available:
 > Instance → **Stop** → wait for Stopped → **Actions → Edit** → **Edit shape**
 > → 2 OCPUs, 12 GB → **Save** → **Start**
 
-**Stopping releases an ephemeral public IP.** Do the reserved-IP step first,
-or expect the address to change and every URL to need updating.
+**The IP does not change.** Stopping keeps an ephemeral public IP assigned, so
+there is nothing to do to DuckDNS afterwards and no reason to reserve an IP
+first — see the section above, which corrects an earlier claim to the contrary.
 
 Oracle's own console still advertises the old 4 OCPU / 24 GB allowance, while
 the docs now say the free tier was halved to 2/12 on 15 June 2026 with no
