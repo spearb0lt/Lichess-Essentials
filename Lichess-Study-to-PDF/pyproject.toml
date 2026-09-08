@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lichess-study-to-pdf"
-version = "0.1.1"
+version = "0.1.2"
 description = "Turn a Lichess study into a PDF you can step through move by move."
 readme = "README.md"
 requires-python = ">=3.10"

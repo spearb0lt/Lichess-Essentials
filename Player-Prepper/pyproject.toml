@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "player-prepper"
-version = "0.1.1"
+version = "0.1.2"
 description = "Scout a chess opponent from their own games, and measure your preparation against them."
 readme = "README.md"
 requires-python = ">=3.10"
