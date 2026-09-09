@@ -1,7 +1,7 @@
 # Lichess Essentials
 
 [![PyPI](https://img.shields.io/pypi/v/lichess-essentials?logo=pypi&logoColor=white)](https://pypi.org/project/lichess-essentials/)
-[![Python](https://img.shields.Vio/pypi/pyversions/lichess-essentials)](https://pypi.org/project/lichess-essentials/)
+[![Python](https://img.shields.io/pypi/pyversions/lichess-essentials)](https://pypi.org/project/lichess-essentials/)
 [![Downloads](https://static.pepy.tech/badge/lichess-essentials)](https://pepy.tech/project/lichess-essentials)
 [![Downloads](https://static.pepy.tech/badge/lichess-essentials/month)](https://pepy.tech/project/lichess-essentials)
 [![License](https://img.shields.io/pypi/l/lichess-essentials)](LICENSE)
